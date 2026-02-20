@@ -1,5 +1,5 @@
-### 2. The Core Prototype Script (`hk_tree_mapper.py`)
-This script shows that you understand how to use their model and combine it with your knowledge of spatial data and arboriculture. Save this as `hk_tree_mapper.py` in your repository.
+###  The Core Prototype Script (`hk_tree_mapper.py`)
+This script shows that how to use their model and combine it with knowledge of spatial data and arboriculture.
 
 ```python
 import pandas as pd
