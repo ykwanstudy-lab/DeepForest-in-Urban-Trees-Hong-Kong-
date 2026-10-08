@@ -321,7 +321,7 @@ country where you are residing during the GSoC coding period."*（即 5–8 月�
   居民／resident alien，或者喺美國境內做過一日工嘅 contributor 才要交 tax form）
   → 你會**全額收到**，稅係自己報 T1 時計。詳見 §12。
 - ⚠️ Quebec 因法規問題被 Payoneer 排除（Toronto 冇影響）
-- ⚠️ 稅務：stipend 唔係免稅收入，加拿大要自己申報 —— 自己搵會計師確認
+- ⚠️ 稅務：stipend **唔係免稅**，只係 Google 唔預扣；加拿大要自己報 T1 —— 見 §12
 
 ### (b) 其他可以報嘅 org（2026 有參加、同 LiDAR／遙感／空間數據相關）
 
