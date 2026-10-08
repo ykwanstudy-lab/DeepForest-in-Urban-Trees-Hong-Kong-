@@ -558,3 +558,94 @@ Payoneer 開戶 + Google 要驗證身份／地址，實務上要有：
 
 **一句總結：加拿大 = 最高一級（91% of max）+ 最好證明 + 同 mentor 同時區。
 呢個係唯一合理答案，唔需要諗其他。**
+
+## 14. Mentor 會唔會知你住邊？要唔要每日 Zoom？
+
+### (a) Mentor 會知咩？唔會知咩？
+
+| 資料 | 邊個睇到 |
+|---|---|
+| Stipend 金額、居住國、Payoneer、稅表 | **Google + Payoneer**（mentor 唔經手、唔會主動見到） |
+| 你嘅 proposal、PR、issue、GitHub 活動 | Mentor、org admin |
+| Contributor profile（可能包括國家／學校） | Org admin（GSoC dashboard） |
+| **你嘅回覆時間、開會時間** | **Mentor 一定感覺到**（時區藏唔住） |
+
+**結論：mentor 唔會「收到通知」你收幾多錢或者報邊個國家。但佢會從溝通模式知道你喺邊。**
+
+最專業嘅做法 —— 官方 mentor guide 原文：
+> *"Anticipate time away... **Do not surprise an organization with your time commitments later on.**"*
+
+→ 喺 community bonding（5 月頭 3 個星期）**主動講清楚**：
+「我 5–8 月以 Toronto 為基地，但間中會出差；我會每日喺 GitHub 更新進度，
+每週固定時間可以開會，突發情況會提早通知。」
+
+呢個唔係「自爆」，係專業。而且 NumFOCUS 評分表最後一項就係 **"Be honest!"**。
+
+### (b) 兩邊走有冇問題？→ 冇，GSoC 係 100% 遙距 + 異步
+
+真正會出事只有兩樣：
+1. **網絡穩定性** —— GSoC 官方 guide 原文：*"if you are not sure you will have good Internet
+   connectivity continuously over the summer, GSoC is not for you."*
+2. **出席唔到關鍵 call / 突發失聯** —— 官方 roles 要求：*"Give indication that you are
+   alive and working daily"*；*"If you don't communicate with us regularly, we will fail you."*
+
+**對策**：提議一個**固定每週會議時間**，Toronto 同 HK 都遷就到：
+- Toronto 上午 9–11 點 = HK 晚上 9–11 點 ✅
+- Toronto 晚上 8–10 點 = HK 早上 8–10 點 ✅
+（Toronto = UTC-4 夏令，HK = UTC+8，差 12 個鐘）
+
+### (c) 要唔要每日 Zoom？→ **唔需要，絕對唔需要**
+
+- **NumFOCUS 原文**：*"Communicate every working day with your mentor, **preferably in public
+  using the standard channels of your project**."*
+  → 「standard channels」= 你個 project 嘅 GitHub issue／PR，**唔係 Zoom**。
+- **Google 官方 roles**：*"Give indication that you are **alive and working daily**"* → 同樣係 async
+- **DeepForest 嘅官方渠道** = **GitHub Issues + GitHub Discussions**
+  （README：*"Get suggestions on how to improve a model by using the discussion board"*；
+  CONTRIBUTING：非 trivial 改動要**先喺 issue 討論**做法）
+- **實際節奏**（參考 2026 得主）：**每週或每兩週一次視像 call + 每日 async 更新**
+- Saqlain 講嘅「4 次 interview」係**甄選階段**，唔係 coding 階段日常
+- 而且 mentor guide 講明 expectations 要**共同協定**：
+  *"communication frequency, project goals, availability and ways of delivering feedback"*
+  → **即係開會頻率你有份決定**，可以主動提議
+
+**建議嘅最低承諾（唔會 burn out）：**
+- 每日：喺 issue／PR 留一句進度（做咗咩、下一步、有咩 blocker）
+- 每週：30 分鐘視像（或隔週）
+- 每兩週：一篇 blog（NumFOCUS 硬性要求）
+- 每個 evaluation 前：至少一個 commit 經 mentor review
+
+---
+
+## 15. DeepForest 官方 AI 政策（CONTRIBUTING.md 原文）
+
+呢段係 repo 正式政策，比 GSoC wiki 更硬，直接決定你嘅 PR 生死：
+
+> #### AI-Assisted Contributions Policy
+> We recognize that AI tools can be helpful in development. However, we have specific
+> expectations:
+> - **Transparency**: If you used AI tools (e.g., GitHub Copilot, ChatGPT, etc.), please
+>   mention this in your PR description
+> - **Understanding required**: You must understand the code you're submitting.
+>   **Don't submit code you can't explain or debug**
+> - **Review and validation**: AI-generated code must be thoroughly reviewed, tested, and
+>   validated by you before submission
+> - **Context matters**: Ensure AI suggestions fit our project's architecture, patterns,
+>   and coding standards
+
+### PR 要求（同樣係官方）
+
+PR description 必須有：
+- **Problem statement**（連結相關 issue）
+- **Solution approach**（點解決）
+- **Testing**（點測、附結果）
+- **Breaking changes**（如有，用戶點 migrate）
+- **Screenshots/Examples**（如涉視覺化）
+
+Review 規則：
+- 每個 PR **要有對應 issue** 並且 **通過 CI**
+- 要**回應得快**、接受其他方案、預咗要 iterate 幾輪
+- **Inactive 超過 30 日嘅 PR 可能會被直接 close**
+
+→ 呢個 policy 完全解釋咗 §10(c) 見到嘅現象：AI 生成、冇 reproduction、
+描述重複嘅 PR 全部 closed；而「你講得清 + 有 test + 過 CI」嘅 PR 就會 merge。
