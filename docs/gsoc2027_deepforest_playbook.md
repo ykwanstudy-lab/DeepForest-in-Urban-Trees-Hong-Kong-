@@ -298,6 +298,79 @@ repo 有個 label 叫 **`AI_Generated_NA`**，2026 年有 7 個項目被標上�
 | #1336 | Fix: syntax errors in utility function validations | **closed, 冇 merge** |
 | #1337 | Fix dictionary key type mismatch causing KeyError | **closed, 冇 merge** |
 
+## 11. Toronto 居民 stipend + 其他可以報嘅 org
+
+### (a) 住 Toronto 拎幾多？
+
+GSoC stipend = **project size × 居住國 PPP**，而 *"Your location is determined by the
+country where you are residing during the GSoC coding period."*（即 5–8 月實際住邊）
+
+| Size | **加拿大 (USD)** | 香港 (USD) | 差額 |
+|---|---|---|---|
+| Small ~90 h | $1,500 | $1,200 | +$300 |
+| Medium ~175 h | $3,000 | $2,400 | +$600 |
+| **Large ~350 h** | **$6,000** | $4,800 | **+$1,200** |
+
+- **加拿大係最高一級之一**（同美國、英國、瑞士、澳洲、紐西蘭、以色列同級；
+  全球最高 $6,600 = 瑞士／澳洲／紐西蘭／以色列）
+- DeepForest 條 project 係 Large → **Toronto 居民 = US$6,000（≈ HK$46,800）**
+- ⚠️ **唯一槓桿就係居住地**。冇 needs-based 加成、冇「多啲補貼」申請。
+  350 h 已經係最大 size，冇得再升。
+- ⚠️ 如果你 coding period 返香港住 → 變返 HK rate（$4,800）
+- ⚠️ 要交 **tax form + proof of residency**；加拿大居民要填 **W-8BEN**
+- ⚠️ Quebec 因法規問題被 Payoneer 排除（Toronto 冇影響）
+- ⚠️ 稅務：stipend 唔係免稅收入，加拿大要自己申報 —— 自己搵會計師確認
+
+### (b) 其他可以報嘅 org（2026 有參加、同 LiDAR／遙感／空間數據相關）
+
+**第一梯隊（最貼你 profile）**
+
+| Org | 點解適合 | 2026 狀況 |
+|---|---|---|
+| **NumFOCUS** → sub-org **GRASS GIS** | `r.in.pdal` / `v.in.lidar` / `r.in.lidar`，LiDAR 光達處理最強嘅開源 GIS；2026 已由 OSGeo 轉去 **NumFOCUS** 做 fiscal sponsor | 2026 收 2 人（r.proj 平行化、GUI 時空數據） |
+| **NumFOCUS** → **Data Retriever / weecology** | 即係 DeepForest（見前文） | 2026 收 2 人 |
+| **NumFOCUS** → **PySAL** | Python 空間分析（libpysal, spopt, esda）—— 你個 spatial join / 空間統計部分 | 2026 有參加 |
+| **OSGeo** | 地理空間 umbrella：**QGIS（有點雲支援，PDAL backend）**、pgRouting、istSOS、ZOO-Project | 2026 收 2 人（都係 GRASS 出身嘅 mentor 圈子） |
+| **52°North Spatial Information Research GmbH** | **德國研究機構**（唔止基金會），做 sensor web、web geoprocessing、**Earth observation** | 2026 有參加 |
+| **PEcAn Project** | 生態系模型（Boston University Dietze lab 出身）—— 學術 lab、做遙感 + 碳循環數據融合 | 2026 有參加 |
+
+**第二梯隊（技術相鄰）**
+
+| Org | 點解適合 |
+|---|---|
+| **CGAL Project** | 3D 計算幾何：point set processing、surface reconstruction、shape detection —— 點雲處理核心算法 |
+| **Kornia** | 2026 起主力做 **kornia-rs**：Rust 3D CV + spatial AI，edge／robotics 部署（DeepForest 依賴 Kornia！） |
+| **Open Robotics (ROS)** | 點雲感知、PCL 整合、octomap |
+| **OpenVINO Toolkit** | 模型 edge 部署（如果你要將 DeepForest 落去現場設備） |
+| **MLLAM** | AI 天氣預報（neural-lam），DMI／MET Norway 等國立氣象機構 |
+| **IOOS** | NOAA 海洋觀測（遙感 + 開放數據） |
+| **ML4SCI** | 機器學習 + 科學（有 Earth observation 方向） |
+| **ArduPilot / JdeRobot** | 無人機／機器人（如果你做 UAV LiDAR） |
+| **OpenStreetMap** | 開放地理數據 |
+
+**2026 年總共有 183 個 org**；完整名單用 API 拎得到：
+`https://summerofcode.withgoogle.com/api/program/2026/organizations/`
+（2027 版 2 月 19 日左右出）
+
+### (c) 實戰建議
+
+1. **你可以交最多 3 份 proposal**，而且可以交去唔同 org → 唔好只賭 DeepForest。
+2. **同一 umbrella 有優勢**：NumFOCUS 一份申請流程，可以同時考慮
+   Data Retriever / GRASS / PySAL。GRASS 個 AI 政策寫得好直白：
+   *"AI-generated 'slop' ... is easy to spot and will hurt your application.
+   We evaluate applications primarily on GitHub contributions and communication with
+   the GRASS community, not just proposal polish."*
+   → 再次印證：**PR + 溝通 > proposal 文筆**
+3. **GRASS 係 LiDAR 角度最好嘅 second choice**：佢有 `r.in.pdal`、
+   point cloud 資料類型、CHM 相關工具，你嘅 LiDAR 經驗直接對口。
+4. **52°North 同 PEcAn 係「真 lab」**（研究機構／大學 lab），
+   如果你想要學術路線而唔止係開源工程，值得優先睇。
+5. **注意組織穩定性**：2026 年 OSGeo 嘅 ideas page 只剩 4 個子項目（GRASS 已搬去
+   NumFOCUS），所以每年 2 月一定要重新 check 當年名單。
+6. 用同一個方法驗證任何新 org：GitHub 活躍度、mentor 回應速度、
+   ideas page 具體程度、有冇 AI policy。
+
+
 發生咗咩事：
 - maintainer（henrykironde）review 之後 request changes：
   *"Please provide script to reproduce the bug"*
