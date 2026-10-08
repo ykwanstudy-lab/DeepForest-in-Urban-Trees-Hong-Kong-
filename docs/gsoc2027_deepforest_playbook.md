@@ -166,7 +166,7 @@ airborne wildlife benchmark、LandingAI vision agent。
 - **分兩期**：第一期 **45%**（midterm evaluation 通過後，約 7/11）、
   第二期 **55%**（final evaluation 通過後，約 9/1）
 - **付款基於通過 evaluation，唔係基於 code 有冇被採用**
-- 派錢用 Payoneer（190+ 國家）；通過後要交 **tax form + proof of residency**
+- 派錢用 Payoneer（190+ 國家）；**美國**稅務居民／喺美國境內做過工才要交 tax form（見 §12）
 - ⚠️ 唔係僱傭、唔係實習 → 唔可以寫 Google 做僱主；
   完成後正確寫法：*"Google Summer of Code 2026 contributor, NumFOCUS/weecology"*
 
@@ -317,7 +317,9 @@ country where you are residing during the GSoC coding period."*（即 5–8 月�
 - ⚠️ **唯一槓桿就係居住地**。冇 needs-based 加成、冇「多啲補貼」申請。
   350 h 已經係最大 size，冇得再升。
 - ⚠️ 如果你 coding period 返香港住 → 變返 HK rate（$4,800）
-- ⚠️ 要交 **tax form + proof of residency**；加拿大居民要填 **W-8BEN**
+- ⚠️ **稅務：Google 唔會預扣稅，加拿大居民亦唔需要填美國稅表**（官方講明只有美國稅務
+  居民／resident alien，或者喺美國境內做過一日工嘅 contributor 才要交 tax form）
+  → 你會**全額收到**，稅係自己報 T1 時計。詳見 §12。
 - ⚠️ Quebec 因法規問題被 Payoneer 排除（Toronto 冇影響）
 - ⚠️ 稅務：stipend 唔係免稅收入，加拿大要自己申報 —— 自己搵會計師確認
 
@@ -413,3 +415,74 @@ country where you are residing during the GSoC coding period."*（即 5–8 月�
 - [ ] 準備 AI 使用聲明：你用咗咩、用喺邊、你點驗證
 
 - 2025 提過但未做：**active learning module**、airborne wildlife benchmark
+
+## 12. 稅務實算：Toronto US$6,000 實際袋幾多？
+
+匯率參考：**USD/CAD = 1.4243**（2026-10-08）→ US$6,000 = **CAD $8,546**
+
+### (a) Google 會唔會預扣稅？→ **唔會**
+
+Google 官方 Tax Form Instructions 原文：
+- *"All U.S. residents (or resident aliens) or any contributor coding in the U.S. for any
+  length of time during the GSoC program will need to complete a tax form."*
+- *"Only contributors who complete a W-9 and are U.S. residents or resident aliens will
+  receive a 1099-NEC."*
+
+→ **全程喺加拿大做嘢嘅話：唔需要填美國稅表、冇預扣、冇 1099**。
+你會全額收到 US$6,000，稅係自己報加拿大 T1 時計。
+（Google 亦明講：*"Google can not provide you with tax advice"*，有事要搵會計師。）
+
+### (b) 加拿大 2026 稅率（Ontario）
+
+- 聯邦最低稅率 **14%**（首 $58,523）；聯邦 BPA **$16,452**
+  → 即係約 **$16,452 應稅收入以下，聯邦稅 = $0**
+- Ontario 最低 5.05%（首 $53,891）；Ontario BPA 約 $12,990
+- **合併邊際稅率（2026，Ontario，其他收入）**：
+
+| 應稅收入 | 合併邊際率 |
+|---|---|
+| 首 $53,891 | 19.05% |
+| $53,891 – $58,523 | 23.15% |
+| **$58,523 – $94,907** | **29.65%** |
+| $94,907 – $107,785 | 31.48% |
+| $117,045 – $150,000 | 43.41% |
+
+### (c) 兩個情境
+
+**情境 A：GSoC 係你 2026 年唯一收入（例如全職學生）**
+- 應稅收入 CAD $8,546
+- 聯邦：稅 14% × 8,546 = $1,196，但 BPA 抵免 14% × 16,452 = $2,303 → **$0**
+- Ontario：稅 5.05% × 8,546 = $432，BPA 抵免 5.05% × 12,990 = $656 → **$0**
+- 亦唔使交 CPP / EI（唔係僱傭收入）
+- **→ 稅 ≈ CAD $0，實收 ≈ CAD $8,546（≈ US$6,000）**
+
+**情境 B：你本身有全職工作（例如 CAD $60,000 年薪）**
+- GSoC 嗰 CAD $8,546 疊上去，行 **29.65%** 邊際率
+- 稅 = 29.65% × 8,546 ≈ **CAD $2,534**
+- **→ 實收 ≈ CAD $6,012 ≈ US$4,220** ← **你估嘅 $4.5k 就係呢個情境**
+- 如果稅局當佢係**自僱／生意收入**（T2125），仲要交 CPP：
+  11.9% × (8,546 − 3,500 基本豁免) ≈ **$600** → 實收再跌到 ≈ US$3,800
+
+### (d) 一句總結
+
+> **你嘅 $4.5k 估算，只有在你本身有其他收入時才成立。**
+> 如果 GSoC 係你 2026 年唯一收入，實際稅 ≈ **$0**，實收 ≈ **US$6,000**。
+> 差別可以係 **US$1,800**，所以值得搞清楚。
+
+⚠️ 我唔係會計師。以上係按 CRA 2026 稅率／BPA 同 Ontario 稅率計算嘅**估算**，
+未計其他抵免、退稅（GST/HST credit）同你個人狀況。正式申報前搵會計師確認，
+特別係要問清楚「GSoC stipend 應該報 line 13000 other income，
+定係 T2125 自僱收入，定係有其他處理」。
+
+### (e) 值唔值？（誠實計法）
+
+- US$6,000 ÷ 350 小時 = **US$17.1/小時**（稅前）
+- 折合 **CAD $24.4/小時** —— 高過 Ontario 最低工資（約 CAD $17.6），
+  但低過一般 junior developer（CAD $30–40/h）
+- **所以唔應該當佢係一份工嚟計錢。** 真正價值係：
+  1. 一段有學術 mentor 嘅研究經歷（Ben Weinstein / Josh Veitch-Michaelis 級數）
+  2. 可以掛上 CV 嘅 *"Google Summer of Code contributor, NumFOCUS"*
+  3. 你嘅 HK 樹冠數據有機會入 MillionTrees benchmark → 變成可引用成果
+  4. 一條通往論文／學術合作嘅路（Allen et al. 2025 條路線）
+  5. 對 Arbotic 嚟講係「團隊做過 GSoC」嘅技術背書
+- **如果只係為錢：唔值。如果係為咗上面 5 樣：超值。**
