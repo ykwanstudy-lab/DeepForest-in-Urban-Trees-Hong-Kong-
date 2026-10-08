@@ -150,4 +150,93 @@ airborne wildlife benchmark、LandingAI vision agent。
 - 2026 得主心得：https://vickysharma.hashnode.dev/gsoc-2026-weecology
 - 2026 得主心得 2: https://musaqlain.dev/blog/gsoc-2026-community-bonding/
 
+
+## 9. 錢、時間、面試、CV（FAQ）
+
+### (a) 有幾錢？GSoC 2026 stipend（PPP 調整，按 project size + 居住國）
+
+| Size | 工時 | **香港 (USD)** | 全球範圍 |
+|---|---|---|---|
+| Small | ~90 h | **$1,200** | $750 – $1,650 |
+| Medium | ~175 h | **$2,400** | $1,500 – $3,300 |
+| **Large** | **~350 h** | **$4,800** | $3,000 – $6,600 |
+
+- DeepForest 2026 條 project = **Large (350 h)** → 香港居民 **US$4,800**（≈ HK$37,400）
+- 計法：base $6,000（large）再按國家 PPP 調整（HK 係 0.8 倍）
+- **分兩期**：第一期 **45%**（midterm evaluation 通過後，約 7/11）、
+  第二期 **55%**（final evaluation 通過後，約 9/1）
+- **付款基於通過 evaluation，唔係基於 code 有冇被採用**
+- 派錢用 Payoneer（190+ 國家）；通過後要交 **tax form + proof of residency**
+- ⚠️ 唔係僱傭、唔係實習 → 唔可以寫 Google 做僱主；
+  完成後正確寫法：*"Google Summer of Code 2026 contributor, NumFOCUS/weecology"*
+
+### (b) 做幾個月？
+
+- Community bonding **3 週**（2026: 5/1–5/24）—— 呢段已經要開始投入
+- Coding period 標準 **12 週**（2026: 5/25 開始 → 8/17–8/24 最後提交）
+- Google 容許 **8–22 週**；350 h 可以攤到 22 週（extended deadline 11/2）
+- 350 h ÷ 12 週 ≈ **每週 ~29 小時** → 半職到接近全職
+- **全程 ≈ 5 月中到 8 月尾 = 3.5 個月**
+- 硬性要求（NumFOCUS 明文）：
+  - **summer 完結前至少有一個 commit merge 入 development branch**，否則過唔到 final evaluation
+  - 每 **2 星期寫一次 blog**
+  - 每個 evaluation 前至少有一個 commit 經 mentor review
+
+### (c) 睇唔睇 CV？
+
+- **官方 proposal 冇 resume/CV 一欄**。NumFOCUS 個 proposal template 只有
+  **"Development Experience"**（原句：*"Do you have code on github? Can you show
+  previous contributions to other projects?"*）同 "Other Experiences"。
+- 2015–2017 年代好多 NumFOCUS proposal 自己附 CV link → **optional 但常見**。
+- 評分表 6 個 5 分項**冇一項係學歷/履歷**。
+- 2026 得主 Vicky Sharma 係 **一年級本科生**（Delhi University, Mathematics），
+  打贏 Masters/PhD 背景申請者；佢原話：mentors
+  *"valued depth of thinking, experimentation, and problem-solving ability more than
+  credentials alone."*
+- **結論：你嘅 GitHub 就係你嘅 CV。** 多一個 merged PR 值錢過多一頁 CV。
+
+### (d) 使唔使 interview？
+
+- **官方文件冇寫 interview 程序**（NumFOCUS repo 全文搜 "interview" = 零結果）。
+- **但 2026 實際係有**：
+  - Muhammad Saqlain：*"I had 4 interviews with the NumFOCUS team totaling 6+ hours,
+    where we discussed everything from PRs and prototypes to debugging, learning new
+    computer vision frameworks in a very short time, and presenting our findings.
+    All of these things were evaluated in a points-based approach by NumFOCUS senior
+    administrators."* 佢仲話 mentors 喺官方 selection 前 **36 小時**先 interview 佢。
+  - Vicky Sharma：提及 *"multiple discussion calls with mentors"*。
+- **所以：預咗要視像傾 2–4 次，而且係技術討論，唔係 HR 面試。**
+  準備方向：
+  1. 能逐步講清楚你每個 PR 嘅技術決定（點解咁寫、試過咩、失敗咗咩）
+  2. 帶一個 prototype demo
+  3. 即場 debug / 睇新 framework 嘅能力（Saqlain 話佢哋真係考呢樣）
+  4. present 你嘅發現（有數據、有圖）
+
+### (e) 資格（唔好睇漏）
+
+- 18 歲以上、可以喺居住地合法工作、唔住美國禁運國家
+- **Student 或 "open source beginner"**、之前接受過 GSoC **唔多過一次**
+- **"Beginner" 定義**：open source 經驗極少 —— 個人/課堂 project、單一機構內部 project、
+  開過 **少過 10 個** issue/PR 都仍然算 beginner
+  ⚠️ 如果你已經有大量 open source 貢獻紀錄，可能唔符合，要先自己評估
+- 競爭：2026 年 131 個國家共 **23,371 份 proposal**，整體錄取率 **4.88%**，NumFOCUS 更低
+
+### (f) NumFOCUS 官方 proposal template（照抄結構）
+
+```
+# Title
+## Abstract          （最多 10 句，唔可以照抄 ideas page）
+## Technical Details （必須寫齊 library、同 mentor 傾過嘅內容、相關 code/literature 連結）
+## Schedule of Deliverables
+   ### Community Bonding Period
+   ### Phase 1 / Phase 2
+   ### Final Week
+## Development Experience  （GitHub link、之前嘅貢獻、課程/專案）
+## Other Experiences
+## Why this project?
+## Appendix
+```
+- 最後要交 **PDF**，檔名開頭要加 **`[sub-org-name]`**（即 `[Data Retriever]` 或 `[weecology]`）
+- 最多可交 3 份 proposal，但只可以接受 1 個
+
 - 2025 提過但未做：**active learning module**、airborne wildlife benchmark
