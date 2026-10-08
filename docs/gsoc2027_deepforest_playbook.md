@@ -486,3 +486,75 @@ Google 官方 Tax Form Instructions 原文：
   4. 一條通往論文／學術合作嘅路（Allen et al. 2025 條路線）
   5. 對 Arbotic 嚟講係「團隊做過 GSoC」嘅技術背書
 - **如果只係為錢：唔值。如果係為咗上面 5 樣：超值。**
+
+## 13. 「我住邊都可以」點算？→ 申報 **加拿大**，而且要住喺 Toronto
+
+### (a) 規則原文
+
+- GSoC：*"Your location is determined by the country where you are **residing during the
+  GSoC coding period**"*；並且 *"Accepted participants must provide tax forms and
+  **proof of residency**"*
+- 資格要求：*"Eligible to work in your country of residence"*
+- 官方 student guide 警告：*"if you are in a country on a student visa or another type of
+  visa you could have restrictions on the number of hours you can participate"*
+
+→ 即係唔可以「唔報」或者「報個高 PPP 嘅國家」。要揀**一個**國家，而且要證明得到。
+
+### (b) 結論：揀加拿大。三個原因
+
+1. **加拿大本身就係接近最高 tier**（Large = US$6,000，全球最高 $6,600）
+   → 報加拿大**冇蝕底**，唔需要冒險報其他國家
+2. **最證明得到**：家人喺 Toronto、屋企地址、安省證件、銀行戶口、報稅紀錄
+3. **時區贏晒**：Toronto 同 University of Florida 同一個 Eastern Time
+   → 同 mentor 開會唔需要捱夜，而「溝通」喺 NumFOCUS 評分表佔 **5 分 × 2 項**
+   （如果喺 HK 就要 12–13 鐘時差，好蝕）
+
+### (c) 稅務上：你大概率係 CRA 講嘅「factual resident」
+
+CRA 原文：
+> *"You are a factual resident of Canada for income tax purposes if you keep
+> **significant residential ties** in Canada while living or travelling outside the country."*
+
+CRA 列明嘅情況包括：*working temporarily outside Canada*、*attending school in another
+country*、*vacationing outside Canada*、*spending part of the year in the U.S.*
+
+Factual resident 嘅後果：
+- **要報全世界收入**（inside and outside Canada）
+- 繼續享有聯邦／省抵免
+- 按你**保持住宅連繫嘅省份**（即 Ontario）繳省稅
+- 幾時會斷：*decide to stay permanently*、*sell your house in Canada*、
+  *move your spouse/common-law partner and dependent children with you*
+
+→ **家人喺 Toronto + 你唔係永久搬走 = 大概率仍然係加拿大稅務居民**，
+所以 GSoC stipend 要報 T1（但見 §12：如果係你唯一收入，稅 ≈ $0）。
+
+### (d) 要準備嘅「proof of residency」
+
+Payoneer 開戶 + Google 要驗證身份／地址，實務上要有：
+- [ ] 政府證件（加拿大護照／PR 卡／安省車牌／OHIP 卡）
+- [ ] 地址證明（銀行月結單、水電費、租約、家人住址）
+- [ ] 加拿大銀行戶口（收 Payoneer 提款）
+- [ ] （如有）CRA Notice of Assessment —— 呢個係最硬嘅稅務居民證明
+
+**一致性最重要**：GSoC dashboard、Payoneer、稅表三個地方要寫同一個國家／地址。
+
+### (e) 三個實務提醒
+
+1. **5–8 月真係住喺 Toronto** —— 一次過解決稅務居民身份、proof of residency、
+   時區、網絡穩定性四個問題。GSoC guide 明講：
+   *"if you are not sure you will have good Internet connectivity continuously over the
+   summer, GSoC is not for you."*
+2. **OHIP 有居住要求**（一般 12 個月內要喺安省實際逗留 153 日）。
+   如果你長期四圍走，健康卡資格要自己 check 清楚。
+3. **「Eligible to work in your country of residence」**：如果你係加拿大公民／PR 就冇問題；
+   如果你只係訪客身份，呢一項要小心。
+
+### (f) 唔好做嘅事
+
+- ❌ 報瑞士／澳洲／紐西蘭／以色列（$6,600，多 $600）—— 證明唔到，
+  而且 Google 明文要 proof of residency，被查到係失去 stipend 級別嘅風險
+- ❌ 一時報加拿大一時報香港 —— 影響信譽，而 mentor 係會睇你點溝通
+- ❌ 申報期間搬國家 —— 會令 Payoneer 驗證同稅務變複雜
+
+**一句總結：加拿大 = 最高一級（91% of max）+ 最好證明 + 同 mentor 同時區。
+呢個係唯一合理答案，唔需要諗其他。**
