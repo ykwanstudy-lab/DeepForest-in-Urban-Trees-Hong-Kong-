@@ -239,4 +239,104 @@ airborne wildlife benchmark、LandingAI vision agent。
 - 最後要交 **PDF**，檔名開頭要加 **`[sub-org-name]`**（即 `[Data Retriever]` 或 `[weecology]`）
 - 最多可交 3 份 proposal，但只可以接受 1 個
 
+
+## 10. Live coding？用 AI 得唔得？（實話實說）
+
+### (a) 要唔要 live coding？
+
+- **GSoC 官方冇 live coding 環節**。官方 mentor guide 講 selection 時只提
+  *"Interact with the GSoC contributors during the proposal period... Finding out that a
+  GSoC contributor will not interact, or cannot interact well, is absolutely crucial."*
+  —— 全文冇 interview、冇 live coding、冇筆試。
+- **但 NumFOCUS/weecology 2026 實際有多次視像對談**（見 §9d）。Saqlain 講明對談內容係
+  *"PRs and prototypes to debugging, learning new computer vision frameworks in a very
+  short time, and presenting our findings"* —— 即係**考你解釋 + 快速學 + debug**，
+  唔係考你背演算法。
+- **實務結論：預備「live debugging + 講解」，唔係預備「白板寫 algorithm」。**
+  真正會發生嘅情境：
+  1. 開 screen share，叫你講你個 PR 改咗咩、點解咁改
+  2. 即場跑 `pytest`，出 error，睇你點定位
+  3. 叫你睇一段陌生 code 然後講出你理解幾多
+  4. 叫你 demo prototype，然後解釋你嘅設計取捨
+- 所以「手寫 code 慢」唔係致命傷；**「講唔出自己 code 點解咁寫」才係致命傷**。
+
+### (b) 用 AI 得唔得？—— 可以，但有硬規矩
+
+**Google 官方 2026 指引（原文要點）：**
+- 每個 org 政策唔同：*"Some organizations do not allow any use of AI tooling, including
+  in the writing of proposals. Others won't allow any code generated from LLMs into
+  their code base."* → 一定要先讀 org 自己嘅指引
+- **最重要一條**：*"Always Validate and Fully Understand the Code... The human
+  contributor retains 100% responsibility for the work, which necessitates complete
+  understanding and verification. If you don't understand it or are not sure, don't use
+  it until you are able to figure it out."*
+- **AI 用喺邊**：研究/學習/理解新領域（推薦）；boilerplate、imports、寫 test、debug
+  （推薦，但 *"User needs to define the test scope"*）
+- **AI 唔應該用喺**：core logic、最重要嘅部分
+- Mentor 最擔心：妨礙學習、盲信唔驗證、code quality 差增加 maintainer 工作量、
+  licensing/copyright、AI 喺新問題上失效（*"AI is terrible at writing anything other
+  than simple code in a limited context"*）
+
+**NumFOCUS 規定**：*"Contributors must clearly cite any AI tools used. Make sure you
+understand each part of the code."* + 要讀 Google 嘅 AI tooling 指引。
+
+**weecology 規定**（GSoC wiki 原文）：*"We have intentionally selected projects that
+require creativity, thought and problem-solving. This is not the kind of project that a
+student can drop into Cursor/Claude and get a solution. You are welcome to use AI agents
+to help build concepts and speed up development, but blindly following them will yield
+very little success."*
+
+### (c) 真實後果：DeepForest repo 有標籤 `AI_Generated_NA`
+
+repo 有個 label 叫 **`AI_Generated_NA`**，2026 年有 7 個項目被標上（5 個 PR）。
+抽查結果（全部由同一 contributor 提交）：
+
+| PR | 標題 | 結果 |
+|---|---|---|
+| #1306 | Security hardening: replace unsafe `eval()` with AST evaluator | **closed, 冇 merge** |
+| #1335 | Fix data dimension swapping and axis errors | **closed, 冇 merge** |
+| #1336 | Fix: syntax errors in utility function validations | **closed, 冇 merge** |
+| #1337 | Fix dictionary key type mismatch causing KeyError | **closed, 冇 merge** |
+
+發生咗咩事：
+- maintainer（henrykironde）review 之後 request changes：
+  *"Please provide script to reproduce the bug"*
+- 2026 GSoC contributor（vickysharma-prog）公開指出：
+  三個 PR 嘅 description 幾乎一模一樣，問係咪刻意拆分 → 作者自己承認
+  *"the descriptions accidentally matching across those 3 PRs was just a mistake on my
+  end"*
+- 結果：全部 closed，冇一個 merge
+
+**教訓（直接影響你）：**
+1. **每個 PR 要有 reproduction script / test** —— 呢個係 maintainer 第一個要求
+2. **唔可以批量生成似樣嘅 PR** —— description 重複會即刻被認出
+3. **AI 生嘅 code 會被標籤** —— 唔申報係不誠實，申報係正常但會更嚴格被檢視
+4. 相反：**有 reproduction + test + 你自己講得清嘅 PR 會 merge** ——
+   2026 兩位 GSoC 得主就係靠一串 merged PR 入選
+
+### (d) 「手寫 code 好渣」點算？—— 5 個具體對策
+
+1. **記住 NumFOCUS 原句**（可以喺 proposal 直接引用）：
+   *"We value creativity, intelligence and enthusiasm above specific knowledge of the
+   libraries or algorithms we use. We think that an interested and motivated contributor
+   who is willing to learn is more valuable than anything else."*
+   → 佢哋評分表 6 個 5 分項**冇一項係寫 code 能力**
+2. **練「講」多過練「寫」**：每次開 PR 前，用 3–5 分鐘錄音自己講一次
+   「我改咗咩、點解、驗證咗咩、試過咩失敗」。呢個直接對應 interview。
+3. **練 live debugging**：故意喺自己環境整壞一個 test，然後開 screen share 錄住自己
+   點用 traceback → 睇 code → 加 print → 修好。練 5 次就會自然。
+4. **AI 用喺正確位置**：用 AI 讀懂陌生 code、寫 test scaffold、解釋 error；
+   **core logic 自己寫**，因為你一定會被問到。
+5. **用你嘅 domain 做護城河**：你識 LiDAR、點雲、TRAQ、HK 樹木管理 —— 呢啲係
+   mentor 唔識嘅。將你嘅 proposal 定位成「我提供 domain 判斷，engineering 我邊做邊學」。
+
+### (e) Interview 準備 checklist
+
+- [ ] 準備好講 3 個自己嘅 PR（背景 → 改動 → 點驗證 → 有咩 trade-off）
+- [ ] 準備一個 5 分鐘 prototype demo（可以係 DeepForest-HK 個 pipeline）
+- [ ] 練一次「共用 screen 跑 pytest 然後 debug」
+- [ ] 準備 3 條你想問 mentor 嘅技術問題（顯示你真係讀過 code）
+- [ ] 準備好講明你嘅時間承諾（350 h / 12 週，每週幾多個鐘）
+- [ ] 準備 AI 使用聲明：你用咗咩、用喺邊、你點驗證
+
 - 2025 提過但未做：**active learning module**、airborne wildlife benchmark
