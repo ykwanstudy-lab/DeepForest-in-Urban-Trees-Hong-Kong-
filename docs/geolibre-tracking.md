@@ -20,7 +20,6 @@ to refresh the numbers.
 > and any compatibility note written against "2.8.1" are pinned to a version
 > that does not exist.
 
-
 Snapshot taken **2026-10-12** (UTC). Everything below was read from the upstream
 repo and the public package registries on that date — re-run
 [`tools/geolibre_watch.py`](../tools/geolibre_watch.py) to refresh the numbers.
@@ -166,7 +165,6 @@ What the loader requires, which is what your `plugin.json` and bundle must satis
 Start from <https://github.com/opengeos/geolibre-plugin-template> — its
 `npm run package:geolibre` produces the zip layout Desktop expects, which is a
 cheaper upgrade path than hand-maintaining `plugin.js` + `plugin.json`.
-
 
 ## 3. How to keep up (in priority order)
 
@@ -315,6 +313,10 @@ re-architecture. Treat it as a migration, not an update.
 
 The plugin is the only GeoLibre-aware component, so upstream features are only
 usable to the extent the plugin surfaces them. Highest value, lowest risk first:
+
+The full feature-by-feature shopping list — what each upstream capability would
+replace or add, with the wiring — is in
+[`docs/geolibre-features-for-arbotic.md`](geolibre-features-for-arbotic.md).
 
 - **C4's `POST /api/qsm/process`** — keep the enqueue-and-poll shape the
   architecture already promises; the plugin renders progress from the job id.

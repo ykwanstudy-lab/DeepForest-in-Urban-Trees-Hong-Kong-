@@ -26,6 +26,8 @@ which releases roughly every four days; this repo is pinned to 2.8.x while
 upstream is at 3.4.x. [`docs/geolibre-tracking.md`](docs/geolibre-tracking.md)
 holds the status snapshot, the plugin-relevant changes in the releases skipped,
 the plugin contract, an upgrade runbook, and the licensing notes.
+For the feature-level question — what of GeoLibre this app can actually use —
+see [`docs/geolibre-features-for-arbotic.md`](docs/geolibre-features-for-arbotic.md).
 
 ```bash
 python3 tools/geolibre_watch.py            # exit 1 when a pinned channel is behind
