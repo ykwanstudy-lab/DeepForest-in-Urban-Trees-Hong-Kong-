@@ -1,5 +1,5 @@
 {
-  "comment": "Pinned GeoLibre versions. Refresh with tools/geolibre_watch.py --update.",
+  "comment": "Pinned GeoLibre versions and the Desktop build actually deployed. Refresh with tools/geolibre_watch.py --update; record the deployed build with --installed.",
   "repo": "https://github.com/opengeos/GeoLibre",
   "pinned": {
     "conda_forge": "3.4.0",
@@ -8,5 +8,8 @@
     "npm_embed": "3.4.0",
     "npm_map": "3.4.0",
     "pypi": "3.4.0"
+  },
+  "installed": {
+    "geolibre_desktop": "2.8.0"
   }
 }

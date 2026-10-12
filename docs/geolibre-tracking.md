@@ -1,4 +1,25 @@
-# Keeping the Arbotic / DeepForest stack in step with GeoLibre
+# Keeping Arbotic Twin in step with GeoLibre
+
+Snapshot taken **2026-10-12** (UTC), read from the upstream repo and the public
+package registries. Re-run [`tools/geolibre_watch.py`](../tools/geolibre_watch.py)
+to refresh the numbers.
+
+- Upstream: <https://github.com/opengeos/GeoLibre> (MIT, maintained by
+  Qiusheng Wu / `opengeos`)
+- Docs: <https://geolibre.app> · Roadmap: <https://geolibre.app/roadmap/>
+- Latest release: **v3.4.0** (2026-10-11)
+- **Arbotic Twin is pinned to GeoLibre Desktop 2.8.x** — six releases, roughly
+  six weeks, behind.
+
+> **Finding: "2.8.1" is not an upstream release.** The tag list goes
+> `v2.8.0` → `v2.9.0`, and the desktop artifacts are named
+> `geolibre-desktop-2.8.0-x64-portable.zip`, `GeoLibre.Desktop_2.8.0_x64-setup.exe`,
+> and so on — the app version equals the release tag. Check what the installed
+> app actually reports (Help/About, or the Diagnostics panel) before treating
+> 2.8.1 as the baseline; if it is really 2.8.0, then `minGeoLibreVersion` checks
+> and any compatibility note written against "2.8.1" are pinned to a version
+> that does not exist.
+
 
 Snapshot taken **2026-10-12** (UTC). Everything below was read from the upstream
 repo and the public package registries on that date — re-run
@@ -79,6 +100,74 @@ tree platform:
 
 ---
 
+## 2b. The six releases you have skipped, plugin-relevant changes
+
+Arbotic's only coupling to GeoLibre is `apps/map-plugin/` — the plugin *is* the
+integration. These are the upstream changes between 2.9 and 3.4 that touch a
+plugin host, newest first:
+
+| Release | Date | What could affect the Arbotic plugin |
+| --- | --- | --- |
+| v3.4 | 2026-10-11 | Plugin panels run on the Cesium globe through a recording control facade; plugin panels + point clouds + Street View on the globe |
+| v3.3 | 2026-10-05 | **Plugin ecosystem hardens**: registry installs verified against the published bundle hash, registry blocklist honored, `?plugin=` deep link behind a trust prompt, external plugins grouped under Plugins → Installed, plugins can add items to built-in toolbar menus, keep project state through credential stripping, use host proj4/WFS APIs, get a native fetch with a cookie jar on desktop, and read the active map tool |
+| v3.2 | 2026-10-01 | `app.credentials` gives plugins the OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service); MapLibre-control plugins run on the ArcGIS renderer |
+| v3.1 | 2026-09-25 | Mapbox and ArcGIS join the rendering engines — a plugin that only declares `maplibre` is *suspended* when another engine is active |
+| v3.0 | 2026-09-14 | Cesium becomes a primary engine; the app drives the map through a renderer-neutral `MapEngine`; **"plugins are gated on what the active engine can actually do rather than silently doing nothing"**; plugins declare supported engines and switching renderers suspends unsupported ones while keeping settings |
+| v2.9 | 2026-09-03 | A capability model in `@geolibre/core` gates processing, sidecar tools, project editing, data loading, **plugins**, and settings independently; Web Services plugins move into a shared dockable panel host |
+
+Two practical consequences for a 2.8-era plugin:
+
+1. **The renderer gate is new.** A plugin whose manifest omits `engines` defaults
+   to `["maplibre"]`. On 2.8 that was the only engine; on 3.x, switching to
+   Cesium/Mapbox/ArcGIS greys the plugin out (hover for the reason) or suspends
+   it. If the Arbotic popup/3D viewer should survive an engine switch, declare
+   `"engines": ["maplibre"]` explicitly and decide deliberately whether the
+   plugin is engine-neutral.
+2. **Deployment policy can refuse to load your plugin.** `deployment.json`
+   (v2.9+) governs plugin precedence, and `sideload: false` suppresses
+   *project manifest URL* trust. A plugin dropped into the app data `plugins/`
+   directory is still an external plugin, so policy — not just the folder —
+   decides whether it loads. See `docs/deployment-policy.md#plugin-precedence`
+   upstream if you ever ship a locked-down build.
+
+## 2c. The plugin contract as of 3.4
+
+What the loader requires, which is what your `plugin.json` and bundle must satisfy:
+
+- **Install forms**: a `.zip` with a root `plugin.json`, an unpacked directory
+  with a root `plugin.json`, or an HTTPS `plugin.json` manifest URL. Desktop
+  loads external plugins from the **app data `plugins/` directory** at startup —
+  `%APPDATA%\org.geolibre.desktop\plugins\` on Windows, which is where
+  `deploy/start_arbotic.bat` copies `arbotic-twin\`.
+- **Dev directories win.** Settings → Plugins can add local development
+  directories; those are scanned *before* the app data `plugins/` directory, so
+  a dev copy overrides an installed plugin with the same id. **Built-in plugins
+  take precedence over all external plugins.**
+- **The manifest and the bundle must agree.** The `entry` file must export a
+  `GeoLibrePlugin` as the default export or a named `plugin` export, and its
+  `id`, `name`, and `version` **must match `plugin.json`**.
+- **The entry must be self-contained** — a single `.js`/`.mjs` bundle, because
+  relative module imports inside a zip are not resolved by the loader.
+- **Optional manifest fields**: `activeByDefault` (honored only for bundled
+  drop-ins, not for user/project plugins), `engines`, `exclusiveGroup`,
+  `urlParameterNames`.
+- **Registry entries** (only relevant if you ever publish) carry `id`, `name`,
+  `version`, `manifestUrl` (required) plus `minGeoLibreVersion`,
+  `publishableSettings`, and so on. `minGeoLibreVersion` gates *installation*;
+  `publishableSettings` lists the plugin project-state keys allowed to survive
+  "Strip credentials" and shared/exported projects — by default an external
+  plugin's whole state is dropped there and treated as credential-bearing.
+- **CSP on desktop**: `connect-src` allows any `https:`/`http:` host, so your
+  plugin can reach the Flask engine on `127.0.0.1:8000`. `script-src` only
+  allows the app itself, `blob:` URLs, and version-pinned CDN paths — so the
+  bundle must not inject `<script>` or `import()` from another host. Bundle the
+  code (and three.js) into the plugin, or serve it from the engine as data.
+
+Start from <https://github.com/opengeos/geolibre-plugin-template> — its
+`npm run package:geolibre` produces the zip layout Desktop expects, which is a
+cheaper upgrade path than hand-maintaining `plugin.js` + `plugin.json`.
+
+
 ## 3. How to keep up (in priority order)
 
 ### a. Subscribe to releases, not to `main`
@@ -113,33 +202,29 @@ All channels move in lockstep at the release tag, so one number tracks everythin
 Pin exactly (`"@geolibre/core": "3.4.0"`, `geolibre==3.4.0`) and bump
 deliberately — a caret range will drift weekly.
 
-### c. Prefer the stable integration surfaces over forking internals
+Arbotic's real dependency is the **Desktop build**, which is not a
+package-manager artifact. `tools/geolibre_versions.json` therefore records both
+the `pinned` set (what has been validated against) and the `installed` Desktop
+build (what is deployed today). `tools/geolibre_watch.py` reports the gap and
+names every release skipped.
 
-Ranked by how much upstream churn they insulate you from:
+### c. Keep the plugin on the sanctioned surface
 
-1. **Project format** — `.geolibre` (legacy `.geolibre.json` still opens). The
-   app writes format `version: "0.2.0"`; the Python package writes `"0.1.0"`.
-   Reading older files is supported; forward compatibility is not guaranteed, so
-   validate on load. Helpers live in `@geolibre/core`:
-   `createEmptyProject`, `parseProject`, `redactCredentials`, `serializeProject`
-   (see `docs/project-format.md` upstream).
-2. **Plugin API** — a `plugin.json` manifest plus a `GeoLibrePlugin` interface
-   (`id`, `name`, `version`, `activeByDefault`, renderer support, `app.*`
-   helpers). This is the sanctioned way to add a panel, a map control, a
-   toolbar item, or a custom layer. Bundled drop-ins (`public/plugins/<id>/`)
-   and external HTTPS manifests both work, and the marketplace registry lives at
-   `plugins.geolibre.app` (source: `opengeos/geolibre-plugins`) with
-   `minGeoLibreVersion` compatibility checks.
-3. **MCP server / agent skill** — `pip install "geolibre[mcp]"` then
-   `geolibre-mcp --root ~/maps`; writes real projects headlessly and can drive a
-   running desktop map through `live_*` tools. `skills/geolibre/` teaches an
-   external agent how to use it.
-4. **Embed API** — `@geolibre/embed` + the versioned postMessage protocol for
-   hosting a GeoLibre map inside another app.
+The plugin API is the right layer for Arbotic — the Flask engine stays the
+science, the plugin stays the client. Two rules keep that safe across upgrades:
 
-Vendoring or patching GeoLibre internals is the option that costs the most to
-maintain: upstream documents its own hand-written mirrors of unexported
-upstream constants in `docs/maintenance.md`, and those drift **silently**.
+- Call the optional host helpers with **optional chaining**
+  (`app.addTileLayer?.(...)`, `app.getLayerFeatures?.(...)`): upstream types
+  them optional precisely so a plugin keeps working against host variants that
+  lack a helper.
+- Declare what you support (`engines`, `urlParameterNames`,
+  `exclusiveGroup`) rather than relying on defaults, so the host gates the
+  plugin instead of failing at runtime.
+
+Avoid: vendoring GeoLibre internals, importing the app's own modules from a
+plugin bundle, or bundling a second copy of a library the host already
+provides (deck.gl, `@carbonplan/zarr-layer`). Upstream's
+`docs/maintenance.md` is a catalogue of how those seams break *silently*.
 
 ### d. Track your own drift with the included script
 
@@ -163,31 +248,109 @@ straight into CI or a weekly cron job.
 
 ---
 
-## 4. Upgrade checklist when a new version lands
+## 4. The five-minute check, for every new release
 
-1. `python3 tools/geolibre_watch.py` — see what moved.
-2. Read the release notes for **breaking changes** and for anything in
-   *project format*, *plugin API*, or *embed protocol*.
-3. If you ship a `.geolibre` file to users: open an existing file in the new
-   build before upgrading production, and re-save to migrate the format version.
-4. Re-run your own pipeline against the pinned artifact, then bump pins.
+1. `python3 tools/geolibre_watch.py` — see what moved, and which releases you
+   skipped.
+2. Read the release notes for anything touching **project format**, the
+   **plugin API**, or the **rendering-engine gate**. Everything else is additive.
+3. `python3 tools/arbotic_plugin_doctor.py` — confirm the workspace plugin and
+   the installed copy still agree.
+4. Decide: adopt now, or stay pinned. Staying pinned is a legitimate answer —
+   record *why* in `MEMORY.md` so the next session does not re-litigate it.
 5. `--update` the watch file and commit it, so the next diff is meaningful.
+
+The one-off migration from 2.8.x to 3.x is in section 5.
 
 ---
 
-## 5. Note on the current Arbotic repo
+## 5. Upgrade runbook: Desktop 2.8.x to 3.4.x
 
-`Arbotic-Twin_Prototypes-` (React 19 + Vite + three/R3F + `@mlc-ai/web-llm`)
-does **not** currently depend on any GeoLibre package — there is no
-`@geolibre/*` entry in its `package.json`. So nothing needs upgrading today;
-the question is which upstream surface to adopt when the two are wired
-together. For that repo the cheapest path is the **embed API** or a
-**`.geolibre` project export**, rather than importing `@geolibre/core` and
-re-implementing the map. `DeepForest-in-Urban-Trees-Hong-Kong-` is a separate
-Python pipeline pinned to the `deepforest` 1.4.x API
-(`model.predict_tile(raster_path=...)`) and is not affected by GeoLibre
-releases at all.
+Six releases of accumulated change, one of them (v3.0) a rendering-engine
+re-architecture. Treat it as a migration, not an update.
 
-  offline areas, print layout with atlas, story maps.
-- **Automation surfaces** — Python package (`geolibre`), R package, MCP server
-  (`geolibre-mcp`), agent skill, plugin API, embed API, self-hostable server.
+**Before touching anything**
+
+1. Keep the 2.8.0 installer (`geolibre-desktop-2.8.0-x64-portable.zip` or
+   `GeoLibre.Desktop_2.8.0_x64-setup.exe`) as the rollback path.
+2. Record the real installed version (Help/About, or Diagnostics) — see the
+   *2.8.1 does not exist* finding at the top of this file.
+3. Snapshot `var/`, `services/api/tra/tra.db`, and the current
+   `%APPDATA%\org.geolibre.desktop\plugins\arbotic-twin\` copy.
+4. Run `python3 tools/arbotic_plugin_doctor.py` and keep the output as the
+   pre-upgrade baseline.
+
+**Install and re-point**
+
+5. Install 3.4.x, then let `deploy\start_arbotic.bat` re-copy the plugin. The
+   launcher overwrites the installed copy on every run, which is the correct
+   behaviour — the failure mode to watch is a *stale* installed copy that no
+   longer matches the workspace.
+6. Confirm the engine is reachable: `curl http://127.0.0.1:8000/api/health`.
+
+**Verify, in this order**
+
+7. Does the plugin appear at all? Plugins menu → checkmark next to the entry.
+   A greyed-out entry means the active rendering engine is not in the plugin's
+   `engines` list — hover for the reason. A plugin that fails to start is
+   reported as a notification and in **Diagnostics** under `runtime`.
+8. Does the popup still open, with risk badge, metrics, cylinders and the
+   three.js twin?
+9. Do the layers still render — `/api/layers/hk/<z>/<x>/<y>.mvt`, the PMTiles
+   layer, the pilot layers, tree icons?
+10. Re-run the repo's own gates: `verify\verify_live_http.py`,
+    `verify\verify_pmtiles_layer.py`, `verify\verify_species_facets.py`, and
+    `services\api\tra\cli.py --test`. Preserve the documented baselines
+    (682 facet rows, filter total 12,275, about 15,705 Kowloon hits, 1,549 KP
+    features, z13 tile 200 / ocean 404, Range 206).
+
+**Then**
+
+11. `python3 tools/geolibre_watch.py --update` and commit the pins, so the next
+    diff starts from the new baseline.
+12. Update the "GeoLibre Desktop 2.8.1" line in the intro, the environment
+    reference table, and `MEMORY.md`.
+
+## 6. Where Arbotic should plug in next
+
+The plugin is the only GeoLibre-aware component, so upstream features are only
+usable to the extent the plugin surfaces them. Highest value, lowest risk first:
+
+- **C4's `POST /api/qsm/process`** — keep the enqueue-and-poll shape the
+  architecture already promises; the plugin renders progress from the job id.
+  The same job surface is what a future MCP/agent path would drive.
+- **Adopt the plugin template and zip packaging**
+  (<https://github.com/opengeos/geolibre-plugin-template>).
+  `npm run package:geolibre` emits the layout Desktop expects and gives you
+  `engines` / `minGeoLibreVersion` metadata for free, instead of a hand-built
+  `plugin.js` + `plugin.json` pair that the loader must be kept in sync with.
+- **Declare `engines` and `minGeoLibreVersion` explicitly.** The engine list
+  stops a renderer switch from silently disabling the plugin; the minimum
+  version stops an older Desktop from loading a plugin it cannot run.
+- **Features worth exposing through the plugin** as the platform grows: the
+  LiDAR point-cloud annotation workbench (v3.2) for scan QA, AI Segmentation /
+  SamGeo for crown candidates, the Print Layout composer for TRA Form 2 output,
+  and mobile field collection for inspection notes.
+
+## 7. Licensing
+
+- GeoLibre Desktop is **MIT**. A proprietary plugin that talks to it over the
+  plugin API is ordinary use, and MIT imposes no copyleft on the plugin. If you
+  *redistribute* GeoLibre (for example bundled in an Arbotic installer), keep
+  the MIT licence text and copyright notice, and do not imply endorsement.
+- The GPL components Arbotic already lists — PyTLidar (GPL-3.0, bundled in
+  `engine/`) and R/tReeTraits (GPL-2/GPL-3) — are a separate question from
+  GeoLibre and are unaffected by a GeoLibre upgrade. Distribution obligations
+  there are worth a lawyer's read before any release.
+- Publishing the plugin to the GeoLibre marketplace (`plugins.geolibre.app`)
+  would make it downloadable by anyone, which sits badly with the "proprietary,
+  all rights reserved" stance. Keep it private: install from a local directory
+  or a self-hosted manifest URL instead.
+
+## 8. Tooling in this repo
+
+| Command | Purpose |
+| --- | --- |
+| `python3 tools/geolibre_watch.py` | Published vs pinned versions across GitHub, PyPI, npm, conda-forge; lists the releases you have skipped |
+| `python3 tools/geolibre_watch.py --update` | Re-pin after a deliberate bump |
+| `python3 tools/arbotic_plugin_doctor.py` | Validate `apps/map-plugin/plugin.json` and its entry bundle, and diff the workspace copy against the installed GeoLibre copy |

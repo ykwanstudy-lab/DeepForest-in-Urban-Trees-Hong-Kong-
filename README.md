@@ -21,15 +21,16 @@ This pipeline performs three core tasks:
 
 ## Keeping in step with GeoLibre
 
-The mapping, LiDAR, and segmentation side of this stack tracks
-[GeoLibre](https://github.com/opengeos/GeoLibre), which releases roughly every
-four days. See [`docs/geolibre-tracking.md`](docs/geolibre-tracking.md) for the
-current status snapshot, the upstream features that matter for canopy work, and
-an upgrade checklist.
+The map tier runs on [GeoLibre](https://github.com/opengeos/GeoLibre) Desktop,
+which releases roughly every four days; this repo is pinned to 2.8.x while
+upstream is at 3.4.x. [`docs/geolibre-tracking.md`](docs/geolibre-tracking.md)
+holds the status snapshot, the plugin-relevant changes in the releases skipped,
+the plugin contract, an upgrade runbook, and the licensing notes.
 
 ```bash
 python3 tools/geolibre_watch.py            # exit 1 when a pinned channel is behind
 python3 tools/geolibre_watch.py --update   # re-pin after a deliberate bump
+python3 tools/arbotic_plugin_doctor.py     # workspace plugin vs the installed copy
 ```
 
 ## Demo result in an Urban Park

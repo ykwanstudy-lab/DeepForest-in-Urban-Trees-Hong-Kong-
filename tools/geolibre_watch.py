@@ -82,7 +82,7 @@ def collect():
     return published, errors
 
 
-def recent_releases(limit: int = 5):
+def recent_releases(limit=None):
     """Latest release tags from the releases atom feed, newest first."""
     try:
         request = urllib.request.Request(RELEASES_FEED, headers={"User-Agent": USER_AGENT})
@@ -92,8 +92,8 @@ def recent_releases(limit: int = 5):
         return [], f"{type(exc).__name__}: {exc}"
     titles = re.findall(r"<title>([^<]+)</title>", feed)
     updated = re.findall(r"<updated>([^<]+)</updated>", feed)
-    entries = list(zip(titles[1:], updated[1:]))[:limit]  # skip the feed title
-    return entries, None
+    entries = list(zip(titles[1:], updated[1:]))  # skip the feed title
+    return (entries[:limit] if limit else entries), None
 
 
 def main() -> int:
@@ -101,11 +101,20 @@ def main() -> int:
     parser.add_argument("--update", action="store_true", help="re-pin to the published versions")
     parser.add_argument("--json", action="store_true", help="emit JSON instead of text")
     parser.add_argument("--quiet", action="store_true", help="skip the release feed listing")
+    parser.add_argument(
+        "--installed",
+        metavar="VERSION",
+        help="record the GeoLibre Desktop build actually deployed (e.g. 2.8.0)",
+    )
     args = parser.parse_args()
 
-    pins = {}
+    pins, installed = {}, {}
     if PINS_FILE.exists():
-        pins = json.loads(PINS_FILE.read_text(encoding="utf-8")).get("pinned", {})
+        stored = json.loads(PINS_FILE.read_text(encoding="utf-8"))
+        pins = stored.get("pinned", {})
+        installed = stored.get("installed", {})
+    if args.installed:
+        installed["geolibre_desktop"] = args.installed.lstrip("v")
 
     published, errors = collect()
     if not published:
@@ -128,6 +137,18 @@ def main() -> int:
                 status = "current"
         results[label] = {"pinned": pinned, "published": version, "status": status}
 
+    releases, feed_error = recent_releases()
+    latest_tag = published.get("github_release", "")
+    deployed = installed.get("geolibre_desktop")
+    skipped = []
+    if deployed and latest_tag:
+        skipped = [
+            tag
+            for tag, _when in releases
+            if version_key(deployed) < version_key(tag) <= version_key(latest_tag)
+        ]
+        skipped.reverse()  # oldest first
+
     if args.update:
         PINS_FILE.write_text(
             json.dumps(
@@ -135,6 +156,7 @@ def main() -> int:
                     "comment": "Pinned GeoLibre versions. Refresh with tools/geolibre_watch.py --update.",
                     "repo": f"https://github.com/{REPO}",
                     "pinned": {label: info["published"] for label, info in sorted(results.items())},
+                    "installed": installed,
                 },
                 indent=2,
             )
@@ -145,7 +167,18 @@ def main() -> int:
         return 0
 
     if args.json:
-        print(json.dumps({"results": results, "errors": errors, "behind": behind}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "results": results,
+                    "errors": errors,
+                    "behind": behind,
+                    "installed": installed,
+                    "skipped_releases": skipped,
+                },
+                indent=2,
+            )
+        )
         return 1 if behind else 0
 
     width = max(len(label) for label in results)
@@ -159,11 +192,16 @@ def main() -> int:
         for label, message in sorted(errors.items()):
             print(f"    {label}: {message}")
 
-    releases, feed_error = recent_releases()
+    if deployed and latest_tag:
+        state = "behind" if version_key(deployed) < version_key(latest_tag) else "current"
+        print(f"\nDeployed GeoLibre Desktop {deployed} vs published {latest_tag}: {state}")
+        if skipped:
+            print(f"    {len(skipped)} release(s) skipped: {', '.join(skipped)}")
+
     if releases and not args.quiet:
         print("\nRecent releases:")
-        for title, updated in releases:
-            print(f"    {title:<10} {updated}")
+        for title, when in releases[:5]:
+            print(f"    {title:<10} {when}")
     elif feed_error:
         print(f"\n(Release feed unavailable: {feed_error})")
 
@@ -177,4 +215,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
