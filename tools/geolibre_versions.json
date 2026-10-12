@@ -1,0 +1,12 @@
+{
+  "comment": "Pinned GeoLibre versions. Refresh with tools/geolibre_watch.py --update.",
+  "repo": "https://github.com/opengeos/GeoLibre",
+  "pinned": {
+    "conda_forge": "3.4.0",
+    "github_release": "v3.4.0",
+    "npm_core": "3.4.0",
+    "npm_embed": "3.4.0",
+    "npm_map": "3.4.0",
+    "pypi": "3.4.0"
+  }
+}

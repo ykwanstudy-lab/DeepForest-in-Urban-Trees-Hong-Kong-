@@ -19,6 +19,19 @@ This pipeline performs three core tasks:
 * **Tree Equity & Heat Mitigation:** Mapping canopy volume accurately to optimize urban cooling initiatives.
 * **Digital Twin Integration:** Generating 3D urban forest layers for smart city planning.
 
+## Keeping in step with GeoLibre
+
+The mapping, LiDAR, and segmentation side of this stack tracks
+[GeoLibre](https://github.com/opengeos/GeoLibre), which releases roughly every
+four days. See [`docs/geolibre-tracking.md`](docs/geolibre-tracking.md) for the
+current status snapshot, the upstream features that matter for canopy work, and
+an upgrade checklist.
+
+```bash
+python3 tools/geolibre_watch.py            # exit 1 when a pinned channel is behind
+python3 tools/geolibre_watch.py --update   # re-pin after a deliberate bump
+```
+
 ## Demo result in an Urban Park
 ![MASKED_2024_E220473C](https://github.com/user-attachments/assets/752db3dd-fc49-4d85-9ac8-5b028e23edec)
 
