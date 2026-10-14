@@ -117,3 +117,66 @@ traffic; `opencode-zen` is now credential-mandatory.
 
 Not viable: UA/session spoofing (sections 3-4) -- deeper fingerprinting + circumvention clause + account risk.
 
+
+---
+
+# Part 2 (2026-10-14): where to actually get free / near-free quota instead
+
+## OpenRouter: free list is small, and has NO DeepSeek/MiMo/Kimi/GLM/Qwen
+`curl https://openrouter.ai/api/v1/models` -> only **14** ids end in `:free` and price 0/0:
+
+| id | ctx |
+|---|---|
+| `nvidia/nemotron-3-ultra-550b-a55b:free` | 1,000,000 |
+| `nvidia/nemotron-3-super-120b-a12b:free` | 262,144 |
+| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` | 256,000 |
+| `nvidia/nemotron-3.5-lightning:free` | 1,000,000 |
+| `nvidia/nemotron-3.5-content-safety:free` | 128,000 |
+| `google/gemma-4-31b-it:free` | 262,144 |
+| `google/gemma-4-26b-a4b-it:free` | 262,144 |
+| `cohere/north-mini-code:free` | 256,000 |
+| `poolside/laguna-s-2.1:free` | 262,144 |
+| `poolside/laguna-xs-2.1:free` | 262,144 |
+| `thinkingmachines/inkling:free` | 1,048,576 |
+| `thinkingmachines/inkling-small:free` | 1,048,576 |
+| `dots-studio/dots-3-note-preview:free` | 512,000 |
+| `liquid/lfm-2.5-2.6b:free` | 65,536 |
+| `openrouter/free` (router, picks a random free model) | 200,000 |
+
+Rate limits (from the docs JS constants): `FREE_MODEL_RATE_LIMIT_RPM=20`,
+`FREE_MODEL_NO_CREDITS_RPD=50`, `FREE_MODEL_HAS_CREDITS_RPD=1000`,
+`FREE_MODEL_CREDITS_THRESHOLD=10` -> 20 req/min; 50 req/day if you have bought <10 credits
+all-time; 1,000 req/day once you have bought >=10 credits.
+
+**Near-free instead of free** (cheapest paid OpenRouter ids, $/1M input tokens):
+`deepseek/deepseek-v4-flash-0731` $0.016, `deepseek/deepseek-v4.1-flash` $0.0202,
+`z-ai/glm-5.3-flash` $0.036, `qwen/qwen3.7-flash` $0.03, `xiaomi/mimo-v2.6-flash` $0.14,
+`moonshotai/kimi-k3` $0.70. I.e. a full 1M-token DeepSeek V4.1 Flash pass costs ~2 US cents.
+
+## Providers that are genuinely free and decent
+| Provider | Free thing | Notes |
+|---|---|---|
+| **Z.ai / GLM** | `GLM-4.7-Flash`, `GLM-4.5-Flash`, `GLM-4.6V-Flash` listed as **Free / Free / Free / Free** on the official pricing page | best sanctioned "actually free" option; Hermes has a native `zai` provider (`GLM_API_KEY`) |
+| **NVIDIA NIM** | "Free Endpoint Available" for `nvidia/nemotron-3-ultra-550b-a55b` (1M ctx, agentic coding), `moonshotai/kimi-k3`, `deepseek-v4-pro-0813` | call `https://integrate.api.nvidia.com/v1` with an `NVIDIA_API_KEY`; note the **kimi-k3 free endpoint is deprecated 2026-10-14 / unsupported after 10-15** |
+| **Alibaba Model Studio (DashScope)** | new-user free quota, **~1,000,000 tokens per model, valid 90 days**, Singapore region, real-time inference only | covers `qwen3.8-max`, `qwen3.8-flash`, `deepseek-v4-pro-0813`, `glm-5.3`, `kimi-k3`, `MiniMax-M2.5`; Hermes has a native `alibaba` provider (`DASHSCOPE_API_KEY`); enable "Free Quota Only" to avoid surprise billing |
+| **Groq** | Free plan (e.g. `openai/gpt-oss-120b`, `qwen/qwen3.8-27b` ~30 RPM / 1K RPD / 8K TPM / 200K TPD) | Hermes community plugin `groq-provider` |
+| **Cloudflare Workers AI** | **10,000 Neurons/day free** on the Workers Free plan | some models (kimi-k2.6/k2.7...) require paid billing; Hermes plugin `cloudflare-workers-ai-provider` |
+| **Google AI Studio / Gemini API** | free tier exists (per-model RPM/RPD/TPM shown in AI Studio for your project) | rate-limit table is rendered client-side; check AI Studio |
+| **Nous Portal** | Hermes' own OAuth provider, subscription-based | the "Nemotron 3 Ultra free" guide was a **2-week promo (June 4-18)**, expired |
+
+Dead ends: **Cerebras** has *no* permanent free tier (only $5 of credits expiring in 30 days);
+**GitHub Models was fully retired on 2026-07-30**.
+
+## The one community attempt at OpenCode-free-in-Hermes
+- `oc-free-provider` — community plugin by **anpicasso** (`github.com/anpicasso/hermes-oc-free-provider`),
+  v3.0.0, 9 stars, listed Sep 21 2026, **last pushed 2026-09-21 — the exact day the Zen gate started 403ing**.
+  `hermes plugins install oc-free-provider`. Its own README says: *"This plugin's current public
+  compatibility transport is not documented by OpenCode as a supported Hermes integration and **may be
+  changed or disabled at any time**"* and *"Do not use this project to ... **bypass an access restriction**.
+  A disclaimer cannot make a prohibited use compliant."*
+- Same pattern elsewhere: `diegosouzapw/OmniRoute` has an open PR (2026-10-11) *"remove the OpenCode Free
+  provider and its free-tier cl..."*; `decolua/9router` issue (2026-10-13) *"fix(opencode): 400
+  missing_required_parameter 'messages[N].reasoning_c..."*; `haoyiyin/9router` advertises
+  "OpenCode Free oc/ models" for Pi.
+  => every third-party bridge keeps breaking as the gate moves. Treat as unsupported.
+
