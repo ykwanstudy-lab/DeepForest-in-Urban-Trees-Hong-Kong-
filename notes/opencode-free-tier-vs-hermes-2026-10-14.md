@@ -180,3 +180,71 @@ Dead ends: **Cerebras** has *no* permanent free tier (only $5 of credits expirin
   "OpenCode Free oc/ models" for Pi.
   => every third-party bridge keeps breaking as the gate moves. Treat as unsupported.
 
+
+---
+
+# Part 3 (2026-10-14): OpenCode Go economics, and where GPT Luna sits
+
+## How Go's limits actually work (from https://opencode.ai/docs/go)
+- Plans: **Go $10/month**, **Go Plus $40/month** ("2x - Limited time").
+- "Usage limits are defined as **monthly dollar amounts**" per model. Each model has a monthly
+  dollar allowance, and three rolling caps: **5-hour = 20% of monthly, weekly = 50%, monthly = 100%**.
+- Over-limit: you can enable **"Use balance"** in the console so Go falls back to your pay-as-you-go
+  Console balance instead of blocking.
+- Why allowances differ: *"For most models, we make this work through bulk discounts and reserved GPU
+  capacity... For some models, we haven't had the opportunity to negotiate a discount... For these models,
+  you still get a little more than if you paid the model providers directly; this is why their included
+  monthly usage is lower."*
+
+## GPT 6 Luna in the OpenAI lineup (models.dev + Console)
+| model | released | $/1M in | $/1M out |
+|---|---|---|---|
+| GPT 6 Astra | 2026-09-04 | $10 | $50 |
+| GPT 6.1 Sol | 2026-09-29 | $2 | $10 |
+| GPT 6 Sol | 2026-09-22 | $2 | $10 |
+| **GPT 6 Luna** | 2026-09-22 | **$0.10** | **$0.50** |
+| GPT 5.6 Luna | 2026-07-09 | $0.20 | $1.20 |
+
+- `gpt-6-luna` = *"OpenAI's most efficient model for focused, high-volume tasks"*; 1.05M ctx, 128K output,
+  tool calling + reasoning. `gpt-6-luna-pro` = **same underlying model** with `reasoning.mode=pro` for
+  higher quality on complex tasks, **same price**.
+- Go lists Luna at `$0.10 / $0.50` (<=272K) and `$0.20 / $0.75` (>272K), **monthly limit $15**
+  -> **4,230 requests / 5h, 10,560 / week, 21,130 / month**.
+
+## Go included-requests table (selected, requests per month)
+| model | req/5h | req/week | req/month | monthly $ limit | $/1M in-out |
+|---|---|---|---|---|---|
+| Muse Spark 1.3 Contributor | 45,300 | 113,300 | **226,600** | $60 | 0.10 / 0.20 |
+| DeepSeek V4.1 Flash | 34,670 | 86,670 | **173,330** | $80 | 0.15 / 0.60 (off-peak) |
+| MiMo-V2.6-Flash | 30,100 | 75,200 | **150,400** | $60 | 0.14 / 0.28 |
+| LongCat-2.0 | 11,400 | 28,600 | 57,200 | $60 | 0.30 / 1.20 |
+| GLM-5.3-Flash | 6,320 | 15,790 | 31,580 | $60 | 0.15 / 0.50 |
+| Qwen3.8 Flash | 5,400 | 13,500 | 27,000 | $30 | 0.15 / 0.47 |
+| Hy3 | 4,300 | 10,750 | 21,500 | $60 | 0.14 / 0.58 |
+| **GPT 6 Luna** | **4,230** | **10,560** | **21,130** | **$15** | **0.10 / 0.50** |
+| Claude Haiku 5.5 | 3,850 | 9,620 | 19,230 | $15 | 0.10 / 0.50 |
+| MiMo-V2.6-Pro | 3,250 | 8,150 | 16,300 | $15 | 0.435 / 0.87 |
+| Space Bunny | 3,130 | 7,810 | 15,630 | $30 | 0.15 / 0.60 |
+| MiniMax M3 | 3,200 | 8,000 | 16,000 | $60 | 0.30 / 1.20 |
+| GPT 5.6 Luna | 2,050 | 5,100 | 10,250 | $15 | 0.20 / 1.20 |
+| Kimi K2.7 Code | 1,350 | 3,380 | 6,750 | $60 | 0.95 / 4.00 |
+| DeepSeek V4 Pro | 1,050 | 2,600 | 5,200 | $15 | 0.66-1.32 / 1.98-3.96 |
+| GLM-5.3 | 220 | 540 | 1,080 | $15 | 1.40 / 4.40 |
+| Qwen3.8 Max | 160 | 400 | 810 | $15 | 2.00 / 6.00 |
+| Grok 4.7 | 169 | 423 | 845 | $15 | 2.00 / 6.00 |
+| Kimi K3 | 110 | 250 | 490 | $15 | 3.00 / 15.00 |
+| LongCat 2.5 Preview Free | Unlimited | Unlimited | Unlimited | Free | 0 / 0 |
+| Step 5 Preview Free | Unlimited | Unlimited | Unlimited | Free | 0 / 0 |
+| Cat Jam Free | Unlimited | Unlimited | Unlimited | Free | 0 / 0 |
+
+## Read of it
+- Value multiple = monthly allowance / $10 sub: Luna and the other un-discounted frontier models are
+  **1.5x** ($15/$10); MiMo-V2.6-Flash, GLM-5.3-Flash, LongCat-2.0, Hy3, MiniMax are **6x** ($60);
+  DeepSeek V4.1 Flash is **8x** ($80). Luna's public OpenAI price ($0.10/$0.50) equals Go's listed price,
+  so Go is 1.5x cheaper than paying OpenAI direct for Luna.
+- Same price outside Go: OpenRouter / OpenAI / Azure all list `gpt-6-luna` at **$0.10/$0.50** (Databricks
+  $1/$6, AWS Mantle GPT-5.6 Luna $0.22/$1.32) -> you can pay-per-use Luna without the $10 subscription.
+- Cheapest sane mix for a Hermes user on Go: run everyday turns on the **3 unlimited free stealth models**
+  (LongCat 2.5 Preview Free / Step 5 Preview Free / Cat Jam Free) or the 6x-value Flash models, and reserve
+  Luna/Haiku for tasks where you specifically want an OpenAI/Anthropic-family small model.
+
