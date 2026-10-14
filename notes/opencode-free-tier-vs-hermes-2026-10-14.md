@@ -237,6 +237,51 @@ Dead ends: **Cerebras** has *no* permanent free tier (only $5 of credits expirin
 | Step 5 Preview Free | Unlimited | Unlimited | Unlimited | Free | 0 / 0 |
 | Cat Jam Free | Unlimited | Unlimited | Unlimited | Free | 0 / 0 |
 
+
+---
+
+# Part 4 (2026-10-14): GPT-6 Luna vs the rest, on real benchmarks
+
+Source: Artificial Analysis leaderboard (`artificialanalysis.ai/leaderboards/models`, scraped 2026-10-14)
++ AA article "GPT-6 Sol and Luna push the cost efficiency frontier" (2026-09-22).
+Columns: AA **Intelligence Index** (higher better), **cost per task** (USD), output speed (tokens/s).
+
+| Model | ctx | Intelligence | $/task | t/s |
+|---|---|---|---|---|
+| Claude Opus 5.5 (max) | 1M | 58 | $5.98 | 95 |
+| Claude Sonnet 5.5 (max) | 1M | 56 | $5.46 | 137 |
+| GPT-6 Astra (max) | 1M | 53 | $3.26 | 61 |
+| Gemini 4 Argon (high) | 1M | 53 | $1.99 | - |
+| GPT-6.1 Sol (max) | 1M | 52 | $0.72 | 59 |
+| GPT-6.1 Sol (medium) | 1M | 48 | $0.21 | 55 |
+| Muse Spark 1.3 (max) | 1M | **48** | $1.60 | 128 |
+| MiMo-V2.6-Pro | 1M | **46** | **$0.13** | 47 |
+| Grok 4.7 (xhigh) | 500k | 46 | $3.74 | 86 |
+| GLM-5.3 (max) | 1M | 45 | $2.01 | 62 |
+| Kimi K3 (max) | 1.05M | 44 | $2.00 | 45 |
+| Claude Haiku 5.5 (max) | 1M | 43 | $0.21 | **237** |
+| GLM-5.3-Flash | 1M | 42 | $0.28 | 67 |
+| DeepSeek V4.1 Flash (max) | 1M | 39 | $0.27 | 187 |
+| MiMo-V2.6-Flash | 1M | 38 | **$0.06** | 65 |
+| **GPT-6 Luna (max)** | 1M | **38** | **$0.07** | 135 |
+| LongCat 2.0 | 1M | 19 | $0.15 | 68 |
+
+Coding Agent Index (AA, Codex harness): **GPT-6 Luna (max) = 41**, a 2-point *regression* from GPT-5.6 Luna
+(max) = 43, at ~60% lower cost per task ($0.07 vs $0.18 on the Intelligence Index). GPT-6 Sol (max) = 57.
+AA-Omniscience: Luna hallucination 93% -> 77%, accuracy 44% (vs 43%), index -10 -> +1. GDPval-AA v2.1
+drops ~75 Elo; AA-Briefcase v1.1 drops ~45 Elo. Luna emits more output tokens per task (51k vs 41k).
+
+## Verdict for a Go subscriber
+- Luna's index (38) equals **MiMo-V2.6-Flash** (38) and sits *below* DeepSeek V4.1 Flash (39),
+  GLM-5.3-Flash (42), Haiku 5.5 (43), GLM-5.3 (45), MiMo-V2.6-Pro (46), Muse Spark 1.3 (48).
+- On Go's own allowance table Luna is also the *worst value* of that group:
+  Luna $15 -> 21,130 req/mo, vs MiMo-V2.6-Flash $60 -> 150,400, DeepSeek V4.1 Flash $80 -> 173,330,
+  Muse Spark 1.3 Contributor $60 -> 226,600, GLM-5.3-Flash $60 -> 31,580.
+- Muse Spark 1.3 Contributor is index 48 at $0.10/$0.20 -- the standout, but its prompts/completions
+  **may be used to train future Meta models** and availability is region-limited.
+- Luna is only the right pick when you specifically want an OpenAI-family small model / its tool-calling
+  behaviour, 1M context, or high concurrency at low cost per call.
+
 ## Read of it
 - Value multiple = monthly allowance / $10 sub: Luna and the other un-discounted frontier models are
   **1.5x** ($15/$10); MiMo-V2.6-Flash, GLM-5.3-Flash, LongCat-2.0, Hy3, MiniMax are **6x** ($60);
