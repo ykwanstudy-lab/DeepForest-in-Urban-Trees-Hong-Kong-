@@ -352,3 +352,48 @@ SilvaLiDAR Air **唔係「另一個 GIS」**，而係一部**專門做「點雲 
 6. 兩期比較 → 生長率、移除／倒樹、樹冠覆蓋變化 → 匯報綠化政策 KPI
 7. 敏感／未公開資料：用 **Ollama 本地模型**跑 SilvaAI，唔好交去雲端 provider
 
+
+---
+
+## 附錄 C：GDAL 同 PDAL 係咩？（SilvaLiDAR Air 依賴嘅兩大基礎庫）
+
+### GDAL — Geospatial Data Abstraction Library（柵格／向量嘅「通用翻譯層」）
+- 由 **OSGeo** 維護，係地理空間界最底層嘅格式抽象庫；**GDAL = 柵格，OGR = 向量**，2015 年後合併成同一個庫。
+- 作用：**用同一套 API 讀寫 250+ 種柵格格式、100+ 種向量格式**，你唔需要為每種格式寫 parser。
+- 附帶 CLI 工具：`gdalinfo`、`gdal_translate`（格式轉換）、`gdalwarp`（重投影／鑲嵌）、`gdalbuildvrt`、`gdal_contour`（等高線）、`ogr2ogr`（向量轉換／重投影）、`gdal_rasterize`。
+- 座標轉換靠 **PROJ**（所以 SilvaLiDAR Air 內有 `proj_9.dll` + `proj.db` 9.73 MiB，含 13,790 個 CRS，包括 HK1980 Grid）。
+- 誰在用：QGIS、ArcGIS、GeoServer、PostGIS raster、Python `rasterio`／`fiona`／`geopandas`／`pyproj`、R `terra`／`sf`…… 幾乎所有 GIS 軟件底層都係佢。
+- 授權：MIT/X11。
+- **SilvaLiDAR Air 內嘅版本：GDAL 3.12.4**（`gdal.dll` 22.1 MiB）。字串顯示支援 GTiff、**COG**、VRT、GPKG、netCDF、HDF5、**Zarr**、MBTiles、**PMTiles**、FlatGeobuf、OpenFileGDB、PostgreSQL、WMS/WMTS… 但**冇 LAS/LAZ driver** → 點雲唔靠 GDAL 處理。
+
+### PDAL — Point Data Abstraction Library（點雲界嘅 GDAL）
+- 同樣係 OSGeo 生態、專門做**點雲**嘅讀寫同處理。
+- **讀**：LAS／LAZ（用 LASzip）、COPC、E57、PLY、PTS／PTX、BPF、Draco、RXP、Terrasolid、text、EPT、STAC…
+- **寫**：LAS／LAZ、COPC、BPF、E57、PLY、Draco，仲有 **`writers.gdal`（直接由點雲輸出 raster：DTM／CHM／密度圖）**。
+- 核心概念係 **pipeline（JSON）**：`reader → 一串 filters → writer`，一段 JSON 就係一個完整處理流程，可以版本控制、重跑。
+- SilvaLiDAR Air 內建版本有約 **90 個 stage**，例如：
+  - 地面分類：`filters.csf`、`filters.pmf`、`filters.smrf`、`filters.sample`
+  - 離群／噪聲：`filters.outlier`、`filters.elm`、`filters.lof`、`filters.mad`
+  - 高度正規化：`filters.hag_delaunay`、`filters.hag_dem`、`filters.hag_nn`
+  - 分割／分塊：`filters.cluster`、`filters.dbscan`、`filters.lloydkmeans`、`filters.chipper`、`filters.divider`
+  - 幾何特徵：`filters.covariancefeatures`、`filters.eigenvalues`、`filters.normal`、`filters.planefit`、`filters.miniball`
+  - 其他：`filters.radialdensity`（密度）、`filters.colorization`（用影像上色）、`filters.crop`、`filters.ferry`、`filters.merge`、`filters.h3`、`filters.m3c2`
+- CLI：`pdal info`、`pdal translate`、`pdal pipeline`、`pdal tile`、`pdal tindex`、`pdal density`。
+- 依賴 GDAL／PROJ 做座標系同部分格式；LAZ 壓縮用 LASzip。授權 BSD-3-Clause。
+- **SilvaLiDAR Air 內**：`pdalcpp.dll`（5.49 MiB）+ `libpdal_plugin_kernel_fauxplugin.dll`；用 PDAL 讀 LAS/LAZ、做色彩化／部分濾波，並用 GDAL 寫出 raster。官方 Citations 頁亦講明：地面濾波行為「參考 PDAL／PCL 嘅 filter 行為」，但**冇 vendored 源碼**（即自家實作 + 對齊行為）。
+
+### 兩者關係（一句）
+**GDAL 管「柵格＋向量」，PDAL 管「點雲」；PDAL 內部用 GDAL／PROJ 做座標轉換，`writers.gdal` 把點雲變成 raster（CHM／DTM），再由 GDAL 讀返。**
+
+### 同一個工作，兩種做法
+| 步驟 | SilvaLiDAR Air（GUI／CLI） | 開源重現（Linux／Python／R） |
+|---|---|---|
+| 讀 LAZ | PDAL `readers.las` | `pdal`／`laspy` |
+| 地面濾波 | 內建 8 種（參考 CSF／PMF／SMRF…） | `pdal filters.csf/pmf/smrf` |
+| 正規化 | 內建（Direct TIN 等） | `pdal filters.hag_delaunay` |
+| CHM | 內建 12 種（pit-free…） | `pdal writers.gdal`、R `lidR::grid_canopy` |
+| 樹偵測 | 內建 8 家族（Silva 2016…） | R `lidR::locate_trees`、`ForestTools`、Python `pyforestscan` |
+| 出圖／向量 | GDAL 寫 GeoTIFF／GPKG | `gdal_translate`／`ogr2ogr` |
+
+**同本 repo（DeepForest HK）嘅關係**：DeepForest 生態係 Python，而 `rasterio`／`fiona`／`geopandas`／`pyproj` 底層全部係 **GDAL + PROJ**（即你已經用緊 GDAL）；要處理 LiDAR 就加 **PDAL**（`pip install pdal` 或 conda）。所以 SilvaLiDAR Air 嘅 CHM／DTM／樹冠指標其實可以用 **PDAL + GDAL + lidR** 喺 Linux 重現 —— 分別只係 SilvaLiDAR Air 幫你砌好 pipeline、預設參數、GUI 同報告。
+
