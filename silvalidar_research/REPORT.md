@@ -116,12 +116,12 @@ app/
 | 語音對話 | SRGS XML 語法 `root="silva"`、TTS/STT 端點 | Windows 語音輸入 + 雲端 TTS/轉錄 |
 | **MCP server** | `SilvaLiDARAir.exe --mcp`（加 `--show`） | 可被 Claude Desktop / Claude Code 驅動；提供 `get_status`、`add_point_clouds`、`run_workflow`、`screenshot`、`read_log` 等 |
 | FFmpeg（非內附） | `https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip` | 「Flight Through」匯出 MP4 時才按你需要下載，或指向自備 ffmpeg.exe |
-| **C2PA 內容憑證** | `c2pa.claim.v2`、`c2pa.hash.data`、`org.contentauth.c2pa_rs` **0.79.2**、spec **2.2.0**、`SSL.com C2PA ICA R1 2025`、`OpenAI TSA …`、`digitalSourceType … trainedAlgorithmicMedia`、`gpt-image` | 內建 C2PA 讀寫能力＋OpenAI／SSL.com 信任鏈，可標示／辨識 AI 生成影像 |
+| **C2PA 內容憑證** | `c2pa.claim.v2`、`c2pa.hash.data`、`c2pa.watermarked.unbound`、`urn:c2pa:24e74b85-…`、`org.contentauth.c2pa_rs` **0.79.2**、spec **2.2.0**、`SSL.com C2PA ICA R1 2025`、`OpenAI TSA Issuing CA`、`digitalSourceType … trainedAlgorithmicMedia`、`gpt-image`、`the synthetic imagery source is valid` | 主程式**內嵌 c2pa-rs（Rust C2PA 實作）同 OpenAI／SSL.com 憑證鏈**，加上 `gpt-image`、`trainedAlgorithmicMedia`、synthetic imagery 等字串 → 極可能係用嚟**驗證／標示 OpenAI 影像服務產生嘅 AI 影像來源憑證**；注意：用戶文件完全冇提及此功能（屬未公開／內部功能，屬推斷） |
 | 設定儲存 | `QSettings`、`LOCALAPPDATA` | 無 registry 依賴 |
 | User-Agent | `SilvaLiDARAir/0.1.8.11 (+https://silvalab.ca)` | app 自報官網係 **silvalab.ca** |
 | 內建 CLI 選項 | `--tool chm|ground|dtm|trees|canopy-gap|colorize|tiles|merge|homogenize|catalog-pipeline|plot-products|area-metrics|earth-imagery`、`--chm-resolution`、`--csf-threshold`、`--aba-report-job`、`--all-dialogs-smoke-test` … | 大量 `*-check` 係開發者自測入口，亦可作功能探測 |
 
-**遙測／追蹤**：用 `telemetry|analytics|sentry|mixpanel|posthog|segment|crashpad` 等關鍵字掃主程式，**無發現**任何分析或崩潰回報 SDK（只撞到產品文案 “forest analytics”）。但 app 會主動連網（3DEP、NAIP、AI provider、FFmpeg／Ollama 下載），要監控就用防火牆／代理。
+**遙測／追蹤**：用 `telemetry|analytics|sentry|mixpanel|posthog|segment|crashpad` 等關鍵字掃主程式，**未發現**常見分析或崩潰回報 SDK 字串（只撞到產品文案 “forest analytics”）。此為**關鍵字掃描結論，非完整行為分析**。app 會主動連網（3DEP、NAIP、AI provider、FFmpeg／Ollama 下載），要監控就用防火牆／代理。
 
 ---
 
@@ -201,10 +201,15 @@ python3 analyze_pe.py extracted/app/SilvaLiDARAir.exe            # 主程式
 
 # 3) 解包（Inno Setup 6.7 data 需要 innoextract >= 1.11）
 #    Debian/GitHub 官方 binary 需要 glibc 2.38 / boost 1.83+，本機 glibc 2.36 → 自行編譯 1.13.0
-#    （scripts 見 tools/build.sh；依賴 headers 由 deb 解出）
+cd silvalidar_research/tools
+./fetch_deps.sh      # 抓 boost 1.74 dev+runtime、zlib/lzma headers、innoextract 源碼，套用 patches/
+./build.sh           # 用 GCC 12 編出 ./innoextract
+
+cd ..
 tools/innoextract --info  SilvaLiDAR_Air_Setup_latest_x64.exe
 tools/innoextract --list  SilvaLiDAR_Air_Setup_latest_x64.exe
-tools/innoextract --extract --output-dir extracted SilvaLiDAR_Air_Setup_latest_x64.exe
+LD_LIBRARY_PATH=tools/root/usr/lib/x86_64-linux-gnu \
+  tools/innoextract --extract --output-dir extracted SilvaLiDAR_Air_Setup_latest_x64.exe
 
 # 4) 檢視內容
 ls extracted/app | head
@@ -237,8 +242,10 @@ EOF
 | `REPORT.md` | 本報告 |
 | `analyze_pe.py` | 自寫 PE 分析器（headers／sections／imports／exports／VERSIONINFO／簽章／打包器指紋） |
 | `filelist.txt` | `innoextract --list` 完整檔案清單（499 項） |
-| `tools/build.sh` | 由源碼編譯 innoextract 1.13.0 嘅腳本 |
-| `tools/innoextract` | 編譯出嘅解包工具（ELF x86-64） |
+| `tools/fetch_deps.sh` | 抓取並解開 build/執行依賴（boost 1.74 dev+runtime、zlib/lzma headers、innoextract 源碼），套用 `patches/` |
+| `tools/build.sh` | 用 GCC 12 編譯 innoextract 1.13.0 |
+| `tools/patches/configure.hpp`、`tools/patches/release.cpp` | 手寫代替 CMake 生成檔（本機無 cmake） |
+| `tools/innoextract`、`tools/debs/`、`tools/root*/`、`extracted/` | 建置產物同依賴（**未入 git**，跑 `fetch_deps.sh` + `build.sh` 即可重建） |
 | `tools/`、`deps/` 其餘檔案 | 依賴 headers／libs（未入 git） |
 | `SilvaLiDAR_Air_Setup_latest_x64.exe`、`extracted/` | 原始 installer 同解包結果（未入 git，可重下／重解） |
 

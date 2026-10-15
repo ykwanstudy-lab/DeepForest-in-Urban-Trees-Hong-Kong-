@@ -3,8 +3,9 @@
 SilvaLiDAR_Air_Setup_latest_x64.exe
 extracted/
 
-# innoextract build inputs and outputs (rebuildable with tools/build.sh)
+# innoextract build inputs and outputs (rebuildable with tools/fetch_deps.sh + tools/build.sh)
 tools/*.deb
+tools/debs/
 tools/*.tar.gz
 tools/obj/
 tools/libs/
