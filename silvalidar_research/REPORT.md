@@ -249,3 +249,106 @@ EOF
 | `tools/`、`deps/` 其餘檔案 | 依賴 headers／libs（未入 git） |
 | `SilvaLiDAR_Air_Setup_latest_x64.exe`、`extracted/` | 原始 installer 同解包結果（未入 git，可重下／重解） |
 
+
+---
+
+# 第二輪深入挖掘（追加 findings）
+
+## 10. 引擎內部：AI 系統提示＋CLI `--help` 揭示嘅完整能力清單
+
+主程式內嵌一段俾 SilvaAI 用嘅 **AUTHORITATIVE TOOL REGISTRY** 系統提示（明文列出所有工具、方法、預設參數、以及「唔准講有」嘅功能），加埋 CLI Guide 內每個 `--tool` 嘅完整 `--help`，等於一份**官方級 capability 清單**：
+
+### 地面濾波（8 種，全部有預設值）
+| 方法 | 關鍵預設 |
+|---|---|
+| PTD（Progressive TIN Densification） | seed 20 m、max angle 30°、max dist 2.0 m、min ground spacing 0.25 m、TIN buffer 30 m、50 iterations |
+| MCC（Multiscale Curvature） | scale 1.50 m、curvature 0.30、100 passes |
+| CSF（Cloth Simulation Filter） | class threshold 0.50 m、cloth res 0.50 m、time step 0.65、rigidness 3、500 iterations |
+| PMF（Progressive Morphological） | cell 1.0 m、max window 33 m、slope 1.0、exp=true |
+| SMRF（Simple Morphological） | cell 1.0 m、slope 0.15、max window 18 m、scalar 1.25 |
+| WLS/IRI（Kraus–Pfeifer robust interpolation） | cell 7 m、g=−2、w=2.5、iterations 5 |
+| MV-HCS（multi-view hierarchical cloth） | cell 2 m、adaptive window 6–20 m、3 hierarchies |
+| AMT v2（Adaptive Multi-Scale Terrain） | scales 20/10/5/2.5 m、max slope 50°、threads auto |
+
+> 一般 GIS／林業軟件通常只有 2–4 種；8 種＋完整參數係少見。
+
+### 其餘核心能力（節錄）
+- **DTM**：TIN/Delaunay（推薦）、KNN-IDW、Kriging（可外插 k/p）；resolution 預設 0.5 m
+- **CHM**：`p2r`、`p2r-subcircle`、`p2r-tin-fill`、`p2r-knn-idw-fill`、`pitfree`（Khosravipour 2014）、`spikefree`（2016）、`tin`、`idw`、`natural-neighbor`、`hybrid`、`streaming-p2r`、**`gpu-p2r`**；`--chm-plugin-dir` 可載入**外部 `.dll`／`.so` CHM plugin**（＝CHM 演算法可擴充，且提到 `.so` 暗示有跨平台打算）
+- **單株樹偵測（8 個家族）**：Silva et al. 2016（CHM 冠幅分割，含 Popescu 可變窗）、Li 2012/TreeSeg（點雲分割）、Dalponte & Coomes 2016、Ferraz AMS3D（3D 自適應 mean-shift）、Marker-controlled Watershed、region-growing、Falkowski wavelet、Yang et al. 2020（watershed + 3D profiles + k-means）
+- **單株樹指標**：HMAX、高度百分位／分佈、crown base height（+percentile）、crown length、crown radius、crown area、**crown diameter major/minor**、crown volume（AlphaShape3D，alpha 0.75 m，可 Balanced/Detailed）；內部參數有 vertical bins 32、min points 30、**stem search fraction 0.62、minimum stem height 1.30 m**、crown expansion 2.75、**leaning threshold 12°、fallen threshold 62°、snag crown ratio 0.10**、soft time limit 30 s
+- **Metrics**：Cloud Metrics（HAG／Elevation、1–99 百分位、intensity／return／class／strata、**LAI/LAD + light profiles 可選**）、Grid Metrics（20 m 格、可出每指標 GeoTIFF、stable grid alignment）、Voxel Metrics、**Custom Metric Designer**
+- **地形衍生**：只有 Slope／Aspect／Hillshade／TRI／Contours；**Curvature、Profile/Plan Curvature、Roughness、TPI、Landforms、Relative Elevation 明確「未實作」並從選單隱藏**
+- **大檔策略**：需要「point records + display index ≤ Windows 可用記憶體 65%，並留 1.5 GiB」；約 **180 bytes/point**；`.lax` 標準空間索引 + 自家 `.slx` cache；Catalog tile 預設 500 m（可 adaptive）、buffer 自動／手動
+- **桌面獨有（CLI 未有）**：SilvaAI、SilvaFlow 圖編輯器、Noise Removal、TRI／Voxel／ABA、手繪 Clip、重投影（建議用 GDAL/OGR）；其餘幾乎全部有 CLI（`catalog-pipeline`、`plot-products`、`area-metrics`）
+- **報告模板章節**（`report_template.html`）：Dataset Overview、Processing Pipeline、Noise Removal、Point Density、Ground Classification、DTM、Hillshade、Slope、Contours、Height Normalization、Classification、CHM、Clip、CloudMetrics、Grid Metrics、Voxel Metrics、Individual Tree Detection、Individual Tree Metrics、Catalog Mode、Canopy Gaps、Final Products & QC
+- **`.sfw` workflow 檔**係自家文字格式（`SILVAFLOW,13` + `NODE,…` 行），內含每個 box 嘅全部參數
+- **Plugin 系統**：每個 plugin DLL 內嵌 **JSON manifest（ABI v2）**，例如
+  - `PowerLineDetection.dll` → `org.silvalab.test.power_lines`（v1.1.0）：*"Experimental unsupervised wire-candidate classification using local height above ground and horizontal neighborhood linearity"*，參數 minimum_height 12 m、ground_cell 15 m、neighborhood_radius 4 m、vertical_tolerance 1.25 m、min_neighbors 5、**min linearity 0.88**，required_buffer 30 m，輸出 LAS class 14 + `power_line_candidates.csv`
+  - `BuildingDetection.dll` → `org.silvalab.test.buildings`（v1.0.0）：*"Experimental elevated low-roughness grid screening"*，cell 5 m，輸出 `building_candidates.csv`
+  - id 用 `org.silvalab.test.*` 前綴 → **屬實驗性工具**；plugin 可掛入 standalone／SilvaFlow／Catalog，並自報 buffer 需求
+- **AI 明文護欄（即「做唔到」清單）**：無內建 calibrated biomass 模型、無物種分類、無 stem taper profile；crown envelope volume ≠ 木材／樹幹體積或生物量；P2R+Subcircle 只屬 CHM、Li 2012 只做分割唔量樹幹體積
+
+## 11. 香港坐標系：可以直接用
+
+`app/share/proj/proj.db`（PROJ 資料庫，13,790 個 CRS）已包含香港坐標系：
+**EPSG:2326 Hong Kong 1980 Grid System**、EPSG:4611 Hong Kong 1980、EPSG:4738/4739 HK 1963、EPSG:8425–8427 Hong Kong Geodetic CS、**EPSG:5738 HKPD height**、EPSG:5739/7976 HKCD/HKPD depth。
+→ 即係可以直接以 HK1980 Grid 出 CHM／metrics／GeoPackage，唔需要自己 reproject。
+
+
+## 12. SilvaLiDAR Air vs QGIS vs ArcGIS（定位同能力比較）
+
+| 面向 | **SilvaLiDAR Air** | **QGIS** | **ArcGIS Pro** |
+|---|---|---|---|
+| 定位 | 垂直領域工具：**機載 LiDAR → 林業／地形產品** | 通用開源 GIS 平台 | 商業企業級 GIS 平台 |
+| 價格／授權 | 免費（專有，禁反編譯） | 免費（GPL） | 訂閱制（各 extension 另計） |
+| 平台 | **只有 Windows x64**（Qt6 GUI） | Windows／macOS／Linux | **只有 Windows x64** |
+| LiDAR 點雲 | 內建完整管線（LAS/LAZ 直讀、串流、.lax、Catalog 分塊、8 種地面濾波、多種 CHM、8 種樹偵測） | QGIS 3.3x+ 原生點雲支援（PDAL/Untwine 索引）；樹木分析要靠 plugin（LAStools toolbox、lidR via R、FUSION、PDAL/`pdal_wrench`）自行砌 | LAS dataset／LAS 點雲圖層、3D Analyst（Classify LAS Ground、LAS Dataset to Raster、Tile LAS）；**有 pretrained deep learning 模型：Tree Detection／Tree Segmentation（影像）同 Tree Point Classification（點雲）**，需 Image Analyst／Deep Learning 授權 |
+| 林業專用演算法 | **內建＋有文獻依據**（Khosravipour pit-free、Silva 2016、Dalponte 2016、Ferraz AMS3D、Li 2012、Yang 2020、CSF、PTD、MCC、SMRF、Kraus-Pfeifer…）＋單株樹指標（冠幅／冠基高／冠體積 alpha shape） | 要逐個裝／寫 script（R `lidR` 最接近） | 靠工具箱組合＋Esri 預訓練模型；林業專用單株樹指標要自己砌 model builder／Python |
+| 報告／可追溯性 | **一鍵 HTML/PDF 報告（20+ 章節）、每個產品記錄參數同 provenance、可重跑** | 要自己用 Atlas／Layout 砌 | 有 Layout／Task，但要自己設計 |
+| 批次／HPC | CLI + Catalog 分塊平行（單檔多核、多 tile 並行） | 靠 GDAL/PDAL CLI、`qgis_process`、Python | ArcPy／Jupyter，企業排程 |
+| 通用 GIS 能力 | **冇**（無向量編輯、無 raster calculator、無 layout 出圖、無 WMS/WFS 編輯、無空間統計工具集） | 極強（向量／柵格編輯、地理處理工具箱、Layout、WMS/WMTS/WFS、Python/Processing） | 極強＋企業級（地理資料庫、版本控制、分享、協作） |
+| 影像底圖 | NAIP／Mapbox／自訂 XYZ/TMS／本地 GeoTIFF/COG/JP2 | 極多 WMS/WMTS/XYZ（含 HK 圖層） | 極多（含 Living Atlas、HK 圖層） |
+| 生態／擴展 | 自家 plugin ABI v2（C++ DLL，內嵌 JSON manifest）＋ CHM 插件（`.dll`/`.so`）；**無 Python 擴展** | 巨大 plugin 生態＋ Python/R | Python (ArcPy)、SDK、Marketplace |
+| 多用戶／企業 | 無（單機） | 靠 PostGIS/QGIS Server | 企業級（Portal／AGOL／版本管理） |
+| AI 助手 | **內建 SilvaAI（Ollama 本地／OpenAI／Anthropic／Gemini）＋ MCP server** | 無內建（可外接） | 有 AI assistants／Copilot 類功能（雲端） |
+
+**一句總結**：
+SilvaLiDAR Air **唔係「另一個 GIS」**，而係一部**專門做「點雲 → 森林／地形產品」嘅垂直工具**，同 QGIS／ArcGIS 係互補關係。它嘅底層其實都係同一批開源庫（PDAL、GDAL、LASzip、PROJ）——QGIS 要自己砌、ArcGIS 要自己砌＋付費；SilvaLiDAR Air 嘅價值就係**預設參數、文獻化方法、單株樹指標、報告同 provenance**。反過來，任何製圖、向量編輯、資料庫、企業協作、物種／深度學習偵測，就一定要用 QGIS／ArcGIS。
+
+## 13. 對 arboriculture（樹木管理／風險評估）嘅 insight
+
+### 香港現況（研究時查證）
+- **CEDD GEO 開放 LiDAR**：2010 同 2020 年**全港航空 LiDAR 測量**，經 CEDD Spatial Data Portal（`sdportal.cedd.gov.hk`）取得 → 香港**有免費、全港、兩期**點雲可做變化偵測。
+- **HyD（路政署）**：多光譜航空照片 → Tree Health Index (THI) + Tree Health Monitoring System (THMS)；用 **UAV LiDAR（HawkScan HS300）** 抽樹高、冠幅，並**用 3D 樹形參數回歸估算 DBH**；用地面 LiDAR 做樹枝分割；高光譜 204 波段建 19 種香港城市樹種光譜庫。
+- **Smart Lab S-0812（AT-Vibe）**：手持／無人機 LiDAR 掃描，自動計 **DBH、冠幅、樹高、光透射率、傾斜角**，傾斜角 >10° 判為高風險，效率提升 5–10 倍。
+
+### SilvaLiDAR Air 喺 arboriculture 做得到
+- **樹冠層指標**：樹高（HMAX）、冠幅（major/minor diameter）、冠面積、冠基高、冠長、冠體積（alpha shape，可檢 `crown_volume_valid` / `is_alpha`）
+- **傾斜／倒伏／枯立相關參數**：`leaning threshold 12°`、`fallen threshold 62°`、`snag crown ratio 0.10`、`stem search fraction 0.62`、`minimum stem height 1.30 m`（**注意：User Guide 未文件化，屬引擎內部能力，需要實測驗證**）
+- **林分／格網指標**：canopy cover、LAI/LAD 光剖面、height percentiles、strata、voxel metrics → 用於**樹冠覆蓋率、綠化目標、棲地／碳匯指標**
+- **樹冠空隙（Canopy Gap）** → 城市林空隙／補植機會、樹冠連通性分析
+- **多期變化偵測**：同一範圍 2010 vs 2020（或颱風前後）LiDAR → 樹冠高度／體積變化、消失（移除／倒樹）、新增
+- **基建衝突篩查**：`PowerLineDetection`（高於地面 12 m + 水平線性度 ≥0.88 → LAS class 14 + CSV）→ **樹線衝突（tree–wire conflict）** 候選點，直接對應兩電嘅修剪計劃；`BuildingDetection`（elevated low-roughness）→ 城市環境遮擋／建築物背景
+- **全港／區級自動化**：Catalog 分塊平行 + CLI + MCP（AI 客戶端可叫佢跑）→ 可以每晚／每季自動出區級樹冠報告
+- **報告同審計**：一鍵 HTML/PDF + 參數 provenance → 適合納入樹木管理系統嘅記錄（可追溯、可重現）
+
+### 做唔到（對 arboriculture 係關鍵限制）
+| 需要嘅 | SilvaLiDAR Air | 原因 |
+|---|---|---|
+| **DBH／樹幹直徑** | ✗（無模型，AI 亦被禁止亂估） | 機載 LiDAR 睇唔到樹幹；HyD 做法係用 3D 樹形參數**回歸**估 DBH → 你可自行用 SilvaLiDAR Air 出嘅冠幅／樹高做 predictors，但**模型要自己 calibrate**（同 ABA 建模概念一致） |
+| **物種識別** | ✗（明文唔支援） | 需要高光譜／影像＋ML |
+| **缺陷／腐朽／樹洞／根系** | ✗ | 要 VTA／TLS／GPR／聲波斷層 |
+| **單枝結構、光透射率（逐棵）** | ✗（LAI 只係格網／雲級，唔係逐棵） | 需要地面／背負式 LiDAR 高密度點雲 |
+| **樹木風險等級（TRA Form 2/3）** | ✗ | 屬專業判斷，工具只提供指標 |
+| **颱風即時／雨後倒樹清單** | 部分（要新點雲 + 人工核對） | 要有覆蓋當區嘅新 LiDAR／航拍 |
+
+### 建議嘅互補工作流（HK 情境）
+1. 由 CEDD Spatial Data Portal 取 2010 / 2020（或最新）LiDAR → 轉 LAS/LAZ
+2. SilvaLiDAR Air（CRS 用 **EPSG:2326 HK1980 Grid**）：`tiles` 分塊 → `ground(CSF/PTD)` → `dtm` → `normalize` → `chm(pitfree)` → `trees(silva2016 / dalponte2016)` → `plot-products` / `area-metrics`
+3. 輸出：逐棵樹表（tree_id、x、y、height、crown_radius、crown_base_height + `_full.csv` 全欄位）、樹冠覆蓋／空隙 raster、Grid/Voxel metrics CSV、HTML/PDF 報告
+4. 同現有系統結合：用座標同 GLTM／TRAM 嘅個別樹記錄（DBH、物種、健康狀況、風險等級）join → 建立「LiDAR 指標 ↔ 風險」篩選模型（例如：樹高 × 冠幅 × 傾斜 × 鄰近目標）
+5. 用 `PowerLineDetection` 做樹線走廊候選點 → 交電纜／修剪團隊核實
+6. 兩期比較 → 生長率、移除／倒樹、樹冠覆蓋變化 → 匯報綠化政策 KPI
+7. 敏感／未公開資料：用 **Ollama 本地模型**跑 SilvaAI，唔好交去雲端 provider
+
