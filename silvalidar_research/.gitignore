@@ -1,0 +1,25 @@
+# Large / reproducible artifacts - not stored in git.
+# Re-download the installer, then re-extract with tools/innoextract (see REPORT.md section 9).
+SilvaLiDAR_Air_Setup_latest_x64.exe
+extracted/
+
+# innoextract build inputs and outputs (rebuildable with tools/build.sh)
+tools/*.deb
+tools/*.tar.gz
+tools/obj/
+tools/libs/
+tools/deps/
+tools/root/
+tools/root13/
+tools/root13b/
+tools/root83/
+tools/root90/
+tools/rootstd/
+tools/innoextract-1.13.0/
+tools/innoextract
+tools/ie-v1.11.0
+tools/ie-v1.12.0
+tools/innoextract-1.13.0-linux-amd64
+tools/srcs.txt
+tools/build.log
+extract.log
