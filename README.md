@@ -39,6 +39,10 @@ not for this use case.
 * **Therefore** this pipeline stays on aerial imagery + LiDAR, and where street-level detail is
   genuinely needed it uses the Lands Department Mobile Mapping System (4–6 cm LAS + 7,000 x 3,500
   panoramas) or Mapillary (CC BY-SA 4.0) instead.
+* **Closest published precedent** — Rodríguez-Puerta et al. (2022), *Sensors* 22(9):3269, uses GSV
+  only to *cross-validate* ALS treetop detections (precision 51% → 76%, recall 86% → 77%). It never
+  rebuilds geometry from GSV; its "point clouds from street level imagery" are sets of detected tree
+  points. The same fusion is implemented here in `tree_detection_fusion.py`.
 
 Full write-up, worked cost examples, technical limits of GSV photogrammetry, the Hong Kong
 alternatives and the related open-source projects:
@@ -50,4 +54,8 @@ Plan a survey's volume and cost offline with:
 python3 gsv_survey_planner.py --length-km 40 --spacing-m 10
 python3 gsv_survey_planner.py --length-km 2100 --spacing-m 10 --headings 4 --json
 python3 gsv_survey_planner.py --self-test   # checks the documented price examples
+
+python3 tree_detection_fusion.py --detected lidar_tops.csv --reference inventory.csv \
+    --cross-check deepforest.csv --dedupe 4
+python3 tree_detection_fusion.py --self-test
 ```

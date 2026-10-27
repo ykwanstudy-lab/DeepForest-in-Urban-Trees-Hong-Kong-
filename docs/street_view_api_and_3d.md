@@ -303,6 +303,77 @@ they are listed so you can see what is technically achievable and which pieces a
 | [`geoporttishare/Helsinki_GreenView`](https://github.com/geoporttishare/Helsinki_GreenView) | 23 | End-to-end GVI pipeline from GSV images (scripts + methodology) |
 | [`kowalski93/Green-View-Index-for-QGIS`](https://github.com/kowalski93/Green-View-Index-for-QGIS) | 15 | QGIS plugin for GVI over an AOI |
 
+### 5.4 Case study — Rodríguez-Puerta et al. (2022), *Sensors* 22(9):3269
+
+> Rodríguez-Puerta, F.; Barrera, C.; García, B.; Pérez-Rodríguez, F.; García-Pedrero, A.M.
+> *Mapping Tree Canopy in Urban Environments Using Point Clouds from Airborne Laser Scanning and
+> Street Level Imagery.* Sensors 2022, 22, 3269. <https://doi.org/10.3390/s22093269> (CC BY 4.0)
+
+This is the closest published precedent to the idea "use GSV to improve the LiDAR inventory", so
+it is worth reading precisely.
+
+**What they actually did** (Pamplona, Spain; 8 circles of 150 m radius, 5 of them
+vehicle-traversable):
+
+| Stage | Input | Method |
+|---|---|---|
+| 1A | **3,102 GSV images** (77 in 2015, 37 in 2017, 1,100 in 2018, 1,888 in 2019) downloaded via the GSV API | Mask R-CNN (Detectron2), fine-tuned on 2,000 LabelMe-masked images, detects *stem and crown*; each detection is geolocated by trigonometry from the panorama's heading/pitch/FOV → one point per tree |
+| 1B | ALS from IGN, Sep–Nov 2017, LEICA SPL100, **14 first returns/m²** | FUSION `CanopyModel` CHM (0.25 m cells, smooth 3), building mask, then `ForestTools` local maxima → one point per treetop |
+| 2A | GSV again | For every candidate, pull the 3 nearest panoramas; if all three trig positions agree within 4 m → one tree, placed at the centroid |
+| 2B | RGB/NIR orthophotos (2014, 2017) | Random forest / SVM on 50 cm buffer zonal statistics, trained on 15,766 labelled points, to classify TREE / NOT TREE |
+| 3 | — | Cluster detections within **4 m** (buffer → polygon cloud → centroid); validate against the municipal inventory with a **5 m** true-positive tolerance |
+
+**Results** (mean of the 5 vehicle-traversable zones; p = precision, r = recall):
+
+| Method | p | r | F1 |
+|---|---|---|---|
+| GSV only (stage 1A) | 41.1% | **85.1%** | 55.4% |
+| ALS only (stage 1B) | 51.0% | **86.4%** | 64.1% |
+| GSV → GSV debugging | 68.2% | 77.4% | 72.5% |
+| GSV → ML debugging | 66.4% | 78.2% | 71.8% |
+| **ALS → GSV debugging** | 76.2% | 76.8% | **76.5%** |
+| ALS → ML debugging | **81.0%** | 71.4% | 75.9% |
+
+**What that actually means**
+
+* Both sources reach the same *recall* (~85–86%) but GSV produces far more false positives, so
+  the useful role of GSV is **cross-validation**: it lifts ALS precision from 51% to 76% at the
+  cost of ~10 points of recall. GSV is a **filter / second opinion**, not a geometry source.
+* **No point cloud is reconstructed from GSV.** The paper's "point clouds from … street level
+  imagery" are *sets of detected tree points* (the authors literally write "the point cloud was
+  transformed into a polygon cloud"). LiDAR points are never modified, densified or corrected by
+  GSV. There is no crown volume, no mesh, no DBH.
+* Their own numbers show why GSV alone is weak for inventory: 41% precision, i.e. more than half
+  of the street-level detections are not real separate trees (duplicates across images, trig
+  geolocation error, stems vs crowns).
+* Scope limit, stated by the authors: *"This methodology, being based on GSV street-level imagery,
+  was only possible on vehicle-traversable streets."* Parks, slopes, villages and pedestrian
+  zones — most of Hong Kong's canopy — are out of reach of the GSV stage.
+* Licensing: 3,102 images were bulk-downloaded through the GSV API and used to fine-tune a neural
+  network. Under today's Google Maps Platform ToS that is §3.2.3(a)(ii) + (c)(v) + (c)(vii). The
+  paper is a scientific precedent, **not** a licence, and it does not make the approach reusable
+  for a public repo or a government deliverable.
+* The authors themselves make the escape hatch explicit: **"Although GSV images have been used in
+  this study, any street-level image is valid to replicate the proposed methodology."** In Hong
+  Kong that means LandsD MMS panoramas (7,000 x 3,500, same geometry, licensed, 4–6 cm LAS
+  alongside) instead of GSV — strictly better inputs for the identical pipeline.
+
+**What is worth copying for this repo**
+
+1. The **two-source fusion architecture**: independent detection from aerial/ALS + independent
+   detection from street level, then mutual filtering. Our equivalent, with fully legal inputs:
+   DeepForest crowns (aerial ortho) ↔ LiDAR CHM treetops ↔ municipal inventory points.
+2. The **4 m merge radius** and **5 m true-positive tolerance** as starting parameters for dense
+   HK street-tree spacing (paper: tree spacing > point spacing, so 4 m was chosen between the two).
+3. Using the **municipal inventory as the validation reference** (their ground truth was Pamplona's
+   official tree database) — exactly the HyD / ArchSD datasets already planned in this repo.
+4. Precision/recall/F1 reporting at the *tree-point* level rather than only IoU on crowns, which
+   is what an inventory user actually cares about.
+
+A small, dependency-free implementation of points 1–2 (dedupe, one-to-one matching, precision /
+recall / F1, cross-validation filter) is included as
+[`tree_detection_fusion.py`](../tree_detection_fusion.py).
+
 ---
 
 ## 6. What to use instead for HK street-level / tree 3D
@@ -401,6 +472,10 @@ a terrestrial laser scanner (or even phone LiDAR for coarse stems) still beats a
    3D *and* publish it.
 6. Document the licence of every input in the README so downstream users (and any government
    partner) can see the pipeline is clean.
+7. **Adopt the two-source fusion architecture from Rodríguez-Puerta et al. (2022)** (§5.4) with
+   legal inputs — DeepForest crowns, LiDAR CHM treetops and the HyD/ArchSD inventory — and report
+   tree-level precision/recall/F1 with `tree_detection_fusion.py`. That reproduces the paper's
+   76% → 81% precision gain over a single source without touching GSV.
 
 ---
 
@@ -416,6 +491,8 @@ a terrestrial laser scanner (or even phone LiDAR for coarse stems) still beats a
 * Street View Publish API (upload your own 360 imagery): <https://developers.google.com/streetview/publish>
 * Mapillary API documentation: <https://www.mapillary.com/developer/api-documentation>
 * Mapillary Terms of Use (CC BY-SA 4.0 user content): <https://www.mapillary.com/terms>
+* Rodríguez-Puerta et al. (2022), *Sensors* 22(9):3269 — GSV × ALS tree detection fusion:
+  <https://doi.org/10.3390/s22093269> (open access, CC BY 4.0)
 * HK Lands Department 3D Mapping / Mobile Mapping System: <https://www.landsd.gov.hk/en/survey-mapping/mapping/3d-mapping.html>
 * HK LiDAR dataset: <https://data.gov.hk/en-data/dataset/hk-cedd-csu-lidar>
 
