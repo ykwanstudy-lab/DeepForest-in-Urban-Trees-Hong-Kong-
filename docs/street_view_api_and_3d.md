@@ -406,6 +406,76 @@ A small, dependency-free implementation of points 1–2 (dedupe, one-to-one matc
 recall / F1, cross-validation filter) is included as
 [`tree_detection_fusion.py`](../tree_detection_fusion.py).
 
+### 5.5 Is Mapillary enough to *train* a LiDAR-segmentation refinement model?
+
+**Short answer: enough images, not enough labels — and for this task you should not train from
+scratch at all.** What "enough" means depends on which part of the LiDAR product you are refining.
+
+| What you want to fix in the LiDAR product | What the street view must supply | Supervision actually needed | Is Mapillary enough? |
+|---|---|---|---|
+| False treetops from CHM local maxima (poles, roofs, walls) | binary evidence "is there a tree at this XY?" | **none to train** — a pretrained detector zero-shot, plus 200–500 checked locations to *measure* accuracy | Yes, where coverage exists |
+| Merged / split crowns, crown boundary | instance masks of individual crowns | instance labels; Vistas only has a `vegetation` *stuff* class, so you label it yourself | Images yes, labels no |
+| Trunk position, crown base height, clearance | close-range images with visible stems | keypoints / lines for a few hundred trees | Images yes (flat 1.5–2 m images beat a 640 px GSV crop), labels no |
+| Point-cloud semantic classes (tree vs building vs furniture) | semantic masks + camera poses | fine-tune on 200–2,000 labelled HK images | Yes, once you label them |
+
+**What Mapillary actually provides**
+
+* 2 billion images globally (milestone reached August 2023), free API with a client token.
+* Rate limits: 60,000 entity requests/min, 10,000 search requests/min, 50,000 tile requests/day.
+* Mostly **flat forward-facing images at ~1.5–2 m** plus 360 sequences — better for trunks than GSV's
+  640 px perspective crop, and every image carries `captured_at`, `quality_score` and geometry.
+* User imagery is **CC BY-SA 4.0**: derived datasets (including 3D) are allowed with attribution and
+  ShareAlike.
+* **Mapillary Vistas v2.0** is the only large labelled set: **25,000 images, 124 classes (70 of them
+  instance-annotated)**, 29.3 GB, licence **CC BY-NC-SA 4.0 — research / non-commercial only**.
+  It annotates `vegetation` as a stuff class, **not individual trees**, so it cannot teach tree
+  instances or trunks.
+
+**Label budget reality**
+
+| Approach | Labelled data | Effort | Comment |
+|---|---|---|---|
+| Zero-shot pretrained segmentation (Mask2Former / SegFormer on Vistas or Cityscapes) | 0 | ~1 day | fine for "tree vs not-tree" masks; watch planters, aerial roots, bamboo scaffolds |
+| Fine-tune for Hong Kong | 200–2,000 images | 1–3 weeks labelling | Rodríguez-Puerta used 2,000; 200–500 is often enough for a domain shift |
+| Train from scratch | Vistas 25k + your data | months + GPU | not worth it for a refinement step |
+
+⚠️ **Check the pretrained weights' licence, not just the imagery.** Vistas and Cityscapes are both
+non-commercial. If this work feeds a tender or an operational government product, start from
+permissively licensed weights (e.g. COCO/OpenImages-trained backbones, DeepForest's MIT weights) or
+train on your own labels.
+
+**Hong Kong coverage is the empirical question** — and it is the one thing Mapillary cannot promise.
+A 0.01° cell (~1.1 km) with fewer than ~50 images should be treated as "no coverage". Probe before
+you plan anything:
+
+```python
+import json, os, urllib.parse, urllib.request
+
+TOKEN = os.environ["MAPILLARY_TOKEN"]          # client token from mapillary.com/dashboard/developers
+
+def images_near(lat, lng, d=0.005):            # bbox must stay < 0.01 deg square
+    query = urllib.parse.urlencode({
+        "access_token": TOKEN, "bbox": f"{lng-d},{lat-d},{lng+d},{lat+d}",
+        "fields": "id,captured_at,is_pano,width,height,quality_score", "limit": 2000,
+    })
+    with urllib.request.urlopen(f"https://graph.mapillary.com/images?{query}", timeout=30) as r:
+        return json.load(r)["data"]
+```
+
+Run it on a 200 m grid over your AOI and plot image count per cell; that map is your training-set
+size. If the AOI is blank, Mapillary cannot help — but the Lands Department **MMS sample (1 GB,
+free)** covers the whole territory at 7,000 x 3,500 px, so it removes the coverage risk entirely.
+
+**Verdict for this repo**
+
+* Do **not** plan a "Mapillary-trained" model for a city-wide HK product. Coverage is patchy and
+  unlabelled; you would spend the budget on labels anyway.
+* Use a **pretrained segmentation/detection model** and fine-tune it on a few hundred **MMS-derived**
+  HK images (guaranteed coverage, better resolution, licensed for internal use).
+* Use Mapillary for what it is uniquely good at: free, legal, georeferenced imagery for spot checks,
+  active-learning candidates, and before/after comparison where sequences exist.
+* Use Vistas only for research prototypes, never in a commercial or government deliverable.
+
 ---
 
 ## 6. What to use instead for HK street-level / tree 3D
@@ -487,6 +557,9 @@ a terrestrial laser scanner (or even phone LiDAR for coarse stems) still beats a
 | Mapillary | yes | yes (you reconstruct) | patchy, check tiles | free | **Yes**, CC BY-SA 4.0 |
 | Own 360 capture | yes | yes | wherever you drive | hardware + time | Yes |
 
+Mapillary supplies *images*, not tree labels: its only large labelled set (Vistas, 25k images) is
+CC BY-NC-SA 4.0 and annotates `vegetation` as a stuff class, not individual trees — see §5.5.
+
 ---
 
 ## 7. Recommendation for this repo
@@ -508,6 +581,9 @@ a terrestrial laser scanner (or even phone LiDAR for coarse stems) still beats a
    legal inputs — DeepForest crowns, LiDAR CHM treetops and the HyD/ArchSD inventory — and report
    tree-level precision/recall/F1 with `tree_detection_fusion.py`. That reproduces the paper's
    76% → 81% precision gain over a single source without touching GSV.
+8. **Do not budget for "training on Mapillary"** (§5.5). Probe HK coverage first; if you need labels,
+   fine-tune a pretrained model on 200–500 MMS-derived images instead. Check the *weights* licence
+   too — Vistas and Cityscapes are non-commercial, which disqualifies them from a tender.
 
 ---
 
@@ -523,6 +599,9 @@ a terrestrial laser scanner (or even phone LiDAR for coarse stems) still beats a
 * Street View Publish API (upload your own 360 imagery): <https://developers.google.com/streetview/publish>
 * Mapillary API documentation: <https://www.mapillary.com/developer/api-documentation>
 * Mapillary Terms of Use (CC BY-SA 4.0 user content): <https://www.mapillary.com/terms>
+* Mapillary Vistas 2.0 release notes (25,000 images, 124 classes, 70 instance-annotated):
+  <https://blog.mapillary.com/update/2021/01/18/vistas-2-dataset.html>
+* Mapillary 10 years / 2 billion images: <https://blog.mapillary.com/update/2024/01/12/Mapillary-10-Years-2-Billion-Images.html>
 * Rodríguez-Puerta et al. (2022), *Sensors* 22(9):3269 — GSV × ALS tree detection fusion:
   <https://doi.org/10.3390/s22093269> (open access, CC BY 4.0)
 * Google Maps Platform Terms of Service as at 1 April 2022 (Wayback Machine), used to confirm which
