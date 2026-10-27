@@ -499,6 +499,61 @@ The Lands Department runs its own vehicle-based MMS and sells the data
 | Conditions | Government copyright — **must not be redistributed** to third parties |
 | Contact | `mmsdata.services@landsd.gov.hk`; index in Shapefile; browser preview in **Open3Dhk → Streetscape 360** |
 
+### 6.1.1 What the free sample actually contains (verified 2026-10-27)
+
+The
+[sample point cloud data](<https://www.landsd.gov.hk/doc/en/survey-mapping/mapping/3d-mapping/sample%20point%20cloud%20data.zip>)
+archive is **873 MB / 231 files**, one short trajectory:
+
+| Content | Detail |
+|---|---|
+| `pointcloud/merge_001.laz` | 1 file, **418 MB** compressed LAS |
+| `panorama1/original/*.jpg` | **209 images**, 1.7–2.8 MB each (~472 MB), sequential capture along the run |
+| Readme / licence | none inside the archive — terms come with the quotation |
+
+The companion **MMS trajectory index** (shapefile, 129 MB zip) shows where the vehicle actually
+drove, so you can check coverage of your AOI *before* paying:
+<https://www.landsd.gov.hk/doc/en/survey-mapping/mapping/3d-mapping/VMMS%20trajectory%20index.zip>
+
+### 6.1.2 How to apply, and what it costs
+
+There is **no published unit rate**. MMS is not in the SMO
+[price list](https://www.landsd.gov.hk/doc/en/mapping/digital-map/common/doc/pricelist.pdf)
+(February 2026), which only lists the catalogue products: digital maps, orthophotos and
+`3D-BIT00` at **HK$0**, and four digital aerial photo series at **HK$325–460 per sheet**. MMS is
+handled as a separate paid service "subject to a fee which aims to recover the cost of providing
+the service" — i.e. **a quotation per request**.
+
+Procedure:
+
+1. **Download the free sample and the trajectory index** (links above). Run your pipeline on it
+   first; it is the only way to know whether the data fits your tree workflow.
+2. **Define your AOI tightly.** A list of road names, a shapefile polygon, or HK1980 Grid
+   coordinates. Cost scales with trajectory length and corridor area, so a 2–3 km pilot is far
+   cheaper than "Kowloon".
+3. **Email `mmsdata.services@landsd.gov.hk`** with: AOI, data required (LAS/LAZ and/or JPEG,
+   whether you need the original 7,000 x 3,500 panoramas), capture period, intended use,
+   organisation, and delivery preference (download link vs physical media).
+4. LandsD replies with **quotation + terms and conditions + order form**; you pay, then they
+   release the extract (volumes are large — plan storage and transfer).
+5. Ask for **written confirmation of the licence for derived products** (can you publish maps,
+   statistics, model outputs? can you share the data with a project partner?) before signing.
+
+What to ask explicitly in the quotation request, because it drives the price:
+
+* unit basis — per km of trajectory, per km² of corridor, per GB, or per sheet?
+* minimum charge, and whether panorama images and point cloud can be bought separately;
+* LAS or LAZ, and whether GPS/IMU trajectory + camera exterior orientation are included
+  (you need these to co-register imagery with the LiDAR);
+* delivery date for a newly captured area vs an existing archive run;
+* whether the T&C allow use inside a government-funded project with external partners.
+
+**Volume estimate.** The sample's 209 panoramas at 1.7–2.8 MB each means ~450 MB of JPEG per
+kilometre *if* they were captured at ~5 m spacing (assumption — LandsD does not publish the MMS
+spacing); add the LAZ for the same corridor (418 MB for that one tile). So budget roughly
+**1 GB per km of street** for imagery + point cloud, and multiply by the number of passes.
+Treat this as an order-of-magnitude figure for planning storage, not as a price.
+
 For street-tree work this is strictly better than GSV on every axis (resolution, density, accuracy,
 licence) — and it is the same vehicle viewpoint, so the same algorithms apply.
 
@@ -608,6 +663,10 @@ CC BY-NC-SA 4.0 and annotates `vegetation` as a stuff class, not individual tree
   clauses were already in force when that paper was published:
   <https://web.archive.org/web/20220401212655/https://cloud.google.com/maps-platform/terms/>
 * HK Lands Department 3D Mapping / Mobile Mapping System: <https://www.landsd.gov.hk/en/survey-mapping/mapping/3d-mapping.html>
+* SMO price list (February 2026) — catalogue products; 3D-BIT00 free, DAP HK$325–460/sheet, no MMS line item:
+  <https://www.landsd.gov.hk/doc/en/mapping/digital-map/common/doc/pricelist.pdf>
+* Digital map product information paper (formats, e.g. 3D-BIT00 in 3ds / 3D Max / FBX / VRML):
+  <https://www.landsd.gov.hk/doc/en/mapping/digital-map/product.pdf>
 * HK LiDAR dataset: <https://data.gov.hk/en-data/dataset/hk-cedd-csu-lidar>
 
 
