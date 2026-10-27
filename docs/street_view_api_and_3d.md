@@ -206,6 +206,29 @@ Two operational details that matter for engineering:
   and non-commercial, which is not a defence you want to rely on for a public repo or a
   government-facing deliverable.
 
+### 3.1 "But this published paper did it" — breach of contract is not the same as breaking the law
+
+Three separate layers, routinely conflated:
+
+| Layer | What it is | What can happen | Is it "illegal"? |
+|---|---|---|---|
+| **Contract (ToS)** | You accepted the Google Maps Platform Terms when you created the billing account / used the key | Google can suspend or terminate the project, revoke the key, stop billing, demand deletion, and in principle seek damages or an injunction (§5 Suspension, §10 Termination) | No — it is a **contractual** breach, not a criminal offence |
+| **Copyright** | GSV imagery is copyrighted by Google and its imagery providers | A rights holder can send a takedown notice, request removal from GitHub, or bring a civil claim for infringement if you redistribute the imagery or publish it as your own dataset | Civil wrong; criminal only in narrow commercial-scale cases |
+| **Practical enforcement** | What Google actually does | Individual researchers are almost never pursued (cost >> benefit). Enforcement is aimed at commercial scale, resale, or public repos that ship a downloader | Risk is **low for private research, high for public/government deliverables** |
+
+So the honest summary: a paper like this is **in breach of the Terms** (and possibly of copyright if
+imagery is redistributed), but it is **not "breaking the law"** in the criminal sense, and peer
+review does not check licensing. Journals review the science; MDPI is not going to audit your API
+key. That is why these papers exist and keep being published — **publication is not a licence**.
+
+Risk by context, for this project:
+
+* private experiment, nothing published or shared → low practical risk, still a breach;
+* public repo + downloader script + city-scale tree index → medium (takedown, institutional IT
+  policy, reviewer questions);
+* tender, government delivery, audit → high (procurement requires clean provenance; "a paper did
+  it" is not an acceptable answer in a data-licence register).
+
 ### Why this matters for *this* project specifically
 
 `DeepForest-HK` builds a city-scale tree index and trains/validates a detector — clauses
@@ -353,6 +376,15 @@ vehicle-traversable):
   network. Under today's Google Maps Platform ToS that is §3.2.3(a)(ii) + (c)(v) + (c)(vii). The
   paper is a scientific precedent, **not** a licence, and it does not make the approach reusable
   for a public repo or a government deliverable.
+* **Timeline check.** The
+  [archived Terms of Service of 1 April 2022](https://web.archive.org/web/20220401212655/https://cloud.google.com/maps-platform/terms/)
+  — three weeks before the paper appeared — already contained, verbatim:
+  *"(ii) bulk download Google Maps tiles, Street View images, …"* (§3.2.3(a)) and
+  *"(v) construct an index of tree locations within a city from Street View imagery"* (§3.2.3(c)).
+  So the two clauses that matter most were **in force at the time of the study**; the paper was not
+  written under an older, looser regime. The one clause that did *not* exist yet is (c)(vii)
+  (training ML models): in 2022 that activity fell under the general "will not create content based
+  on Google Maps Content", rather than a clause naming machine learning explicitly.
 * The authors themselves make the escape hatch explicit: **"Although GSV images have been used in
   this study, any street-level image is valid to replicate the proposed methodology."** In Hong
   Kong that means LandsD MMS panoramas (7,000 x 3,500, same geometry, licensed, 4–6 cm LAS
@@ -493,6 +525,9 @@ a terrestrial laser scanner (or even phone LiDAR for coarse stems) still beats a
 * Mapillary Terms of Use (CC BY-SA 4.0 user content): <https://www.mapillary.com/terms>
 * Rodríguez-Puerta et al. (2022), *Sensors* 22(9):3269 — GSV × ALS tree detection fusion:
   <https://doi.org/10.3390/s22093269> (open access, CC BY 4.0)
+* Google Maps Platform Terms of Service as at 1 April 2022 (Wayback Machine), used to confirm which
+  clauses were already in force when that paper was published:
+  <https://web.archive.org/web/20220401212655/https://cloud.google.com/maps-platform/terms/>
 * HK Lands Department 3D Mapping / Mobile Mapping System: <https://www.landsd.gov.hk/en/survey-mapping/mapping/3d-mapping.html>
 * HK LiDAR dataset: <https://data.gov.hk/en-data/dataset/hk-cedd-csu-lidar>
 
