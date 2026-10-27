@@ -476,6 +476,61 @@ free)** covers the whole territory at 7,000 x 3,500 px, so it removes the covera
   active-learning candidates, and before/after comparison where sequences exist.
 * Use Vistas only for research prototypes, never in a commercial or government deliverable.
 
+### 5.6 Species, pest and disease from street-level imagery: what is actually trainable
+
+Source must be MMS / Mapillary / own capture — not GSV (§3). With an 8,000 x 4,000 MMS panorama a
+tree at 10 m is roughly 1,200 px across, which is enough for crown-scale judgement and *not* enough
+for leaf-scale diagnosis. Split the ambition accordingly.
+
+| Target | What the camera sees at 5–15 m | Verdict |
+|---|---|---|
+| Growth form (palm / broadleaf / conifer / bamboo) | whole silhouette | **Easy.** 100–200 crops/class → >0.9 F1 |
+| Species, top-20 HK street species | crown shape, leaf mass, trunk habit, flowers/fruit when present | **Plausible.** 0.6–0.8 top-1, ~0.85 top-3 with inventory labels + multi-view. Use top-3 for triage |
+| Crown dieback / defoliation / dead tree | bare branches, thinning, brown crown | **Good.** Ordinal 0–3; quadratic weighted kappa 0.6–0.75 is realistic |
+| Lean, root-plate lift, uprooting | whole trunk line vs horizon | **Good** — and directly useful for typhoon risk |
+| Cavities, wounds, cracks, deadwood | visible with an 8K panorama at 5–10 m | **Workable** as flags, needs close passes and human confirmation |
+| Bracket fungi / conks / cankers | 5–10 cm structures | **Marginal.** Rare positives → anomaly detection, not a 20-class classifier |
+| Brown root rot (*Phellinus noxius*) | crown thinning, yellowing, dieback; the diagnostic root-collar crust does **not** show | **Suspect-level only.** Screen crowns, then ground inspection + lab confirmation |
+| Red palm weevil | crown wilting / collapse yes; 1–2 cm entry holes barely | **Suspect-level only** |
+| Polyphagous shot hole borer (*Euwallacea fornicatus*) | 1 mm entry holes | **No.** Needs <2 m and macro optics, not a moving vehicle |
+| Leaf spots, galls, sap-sucking insects, scale | sub-centimetre symptoms | **No.** Leaf close-ups only |
+| Epiphytes / mistletoe / vines | yes | **Good**, and useful for HK banyans |
+
+**Frame the product as VTA pre-screening, not diagnosis.** Hong Kong runs a statutory-ish tree risk
+regime (GLTMS / Tree Risk Assessment) where a qualified person signs off. A model that flags
+"crown dieback 3/3, lean 12°, possible cavity" and routes the tree to an inspector is defensible;
+a model that outputs "infected with PSHB" is not, and will not survive scrutiny after a failure.
+
+**Where the labels come from (the part that decides the project)**
+
+1. **Inventory as free labels.** HyD / ArchSD publish species per tree point. Combine with
+   [`pano_label_manifest.py`](../pano_label_manifest.py) to crop that tree out of every panorama that
+   sees it and inherit the species label — zero manual annotation for the species task.
+2. **Multi-view aggregation.** The same tree appears in 3–10 frames. Average the logits (or vote) per
+   tree; this is usually a bigger gain than a bigger backbone, and it also fixes occlusion.
+3. **Split by tree, not by image.** Multi-view crops of the same tree in train and test is the
+   classic way to publish an 0.95 that collapses in the field.
+4. **Ordinal, not one-hot, for severity.** Dieback 0–3 has order; use QWK and a confusion matrix.
+5. **Rare classes → anomaly detection + active learning.** Do not force 20 balanced classes out of 15
+   positives; train a one-class / OOD score on healthy crowns and send the top-k to a human.
+6. **Pretraining data caveat.** PlantVillage and similar leaf-close-up datasets are the wrong domain —
+   they will not transfer. iNaturalist is useful for a coarse species prior, but check each photo's
+   licence (CC BY-NC photos cannot go into a commercial product).
+
+**Realistic label budget**
+
+| Task | Labels | Expected at that budget |
+|---|---|---|
+| Growth form, 3–4 classes | 100–200 crops/class | F1 > 0.9 |
+| Top-20 species | 150–300 trees/species × 3 views | top-1 0.6–0.8, top-3 ~0.85 |
+| Crown condition, 4 levels | 300–500 crowns, balanced | QWK 0.6–0.75 |
+| Defect flags (binary) | 100–200 positives per flag | recall 0.6–0.8 at precision ~0.5 → triage, not verdict |
+
+**Geometry you need from LandsD.** The manifest above assumes a levelled panorama, the vehicle
+heading from the trajectory, and a 2.5 m camera height. Ask for **camera exterior orientation**
+(and ideally the IMU trajectory) in the MMS quotation (§6.1.2) — without it your bearing-to-pixel
+mapping carries a few metres of error, which matters for a 6 m crown but not for a 15 m one.
+
 ---
 
 ## 6. What to use instead for HK street-level / tree 3D
@@ -510,6 +565,10 @@ archive is **873 MB / 231 files**, one short trajectory:
 | `pointcloud/merge_001.laz` | 1 file, **418 MB** compressed LAS |
 | `panorama1/original/*.jpg` | **209 images**, 1.7–2.8 MB each (~472 MB), sequential capture along the run |
 | Readme / licence | none inside the archive — terms come with the quotation |
+
+Resolution check: the first JPEG in the archive decodes to **8,000 x 4,000 px** (2:1), i.e. better
+than the published "7,000 x 3,500 or better". That is ~11x the linear resolution of a 640 px GSV
+crop, which is what makes species and crown-condition work plausible at all.
 
 The companion **MMS trajectory index** (shapefile, 129 MB zip) shows where the vehicle actually
 drove, so you can check coverage of your AOI *before* paying:
@@ -639,6 +698,9 @@ CC BY-NC-SA 4.0 and annotates `vegetation` as a stuff class, not individual tree
 8. **Do not budget for "training on Mapillary"** (§5.5). Probe HK coverage first; if you need labels,
    fine-tune a pretrained model on 200–500 MMS-derived images instead. Check the *weights* licence
    too — Vistas and Cityscapes are non-commercial, which disqualifies them from a tender.
+9. **If you pursue species / pest / disease ID** (§5.6): start with inventory-labelled pano crops
+   (`pano_label_manifest.py`), growth form and crown-condition severity. Treat pest and disease
+   outputs as VTA *suspect flags* — screening for a human inspection, never a diagnosis.
 
 ---
 

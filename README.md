@@ -43,6 +43,10 @@ not for this use case.
   only to *cross-validate* ALS treetop detections (precision 51% → 76%, recall 86% → 77%). It never
   rebuilds geometry from GSV; its "point clouds from street level imagery" are sets of detected tree
   points. The same fusion is implemented here in `tree_detection_fusion.py`.
+* **Species / pest / disease** — feasible at crown scale (growth form, dieback, lean, deadwood),
+  not at leaf scale (1 mm borer holes, leaf spots). Inventory species labels + `pano_label_manifest.py`
+  give you training data without manual annotation; see §5.6 of the write-up for the honest
+  per-target verdict.
 
 Full write-up, worked cost examples, technical limits of GSV photogrammetry, the Hong Kong
 alternatives and the related open-source projects:
@@ -58,4 +62,7 @@ python3 gsv_survey_planner.py --self-test   # checks the documented price exampl
 python3 tree_detection_fusion.py --detected lidar_tops.csv --reference inventory.csv \
     --cross-check deepforest.csv --dedupe 4
 python3 tree_detection_fusion.py --self-test
+
+python3 pano_label_manifest.py --panos panos.csv --trees trees.csv --out manifest.csv
+python3 pano_label_manifest.py --self-test
 ```
