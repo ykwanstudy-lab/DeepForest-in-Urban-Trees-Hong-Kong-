@@ -23,3 +23,31 @@ This pipeline performs three core tasks:
 ![MASKED_2024_E220473C](https://github.com/user-attachments/assets/752db3dd-fc49-4d85-9ac8-5b028e23edec)
 
 ![MASKED_2025_E259476C](https://github.com/user-attachments/assets/bc4795c9-064f-416e-8a6b-545b398a15c1)
+
+## Street-level imagery & 3D: what is (and is not) allowed
+
+A common question is whether Google Street View (GSV) can supply the 3D layer. Short answer:
+not for this use case.
+
+* **How/price** — Street View Static API returns one perspective crop per request, max
+  **640 x 640 px**, at **$7.00 per 1,000 panoramas** with 10,000 free calls per month
+  (metadata calls are free and uncapped).
+* **Licence** — Google Maps Platform ToS §3.2.3 prohibits bulk Street View downloads (a)(ii),
+  caching (b), creating content from Maps Content (c) — which explicitly includes
+  *"construct an index of tree locations within a city from Street View imagery"* (c)(v) —
+  and using Maps Content to train or validate ML models (c)(vii).
+* **Therefore** this pipeline stays on aerial imagery + LiDAR, and where street-level detail is
+  genuinely needed it uses the Lands Department Mobile Mapping System (4–6 cm LAS + 7,000 x 3,500
+  panoramas) or Mapillary (CC BY-SA 4.0) instead.
+
+Full write-up, worked cost examples, technical limits of GSV photogrammetry, the Hong Kong
+alternatives and the related open-source projects:
+**[docs/street_view_api_and_3d.md](docs/street_view_api_and_3d.md)**.
+
+Plan a survey's volume and cost offline with:
+
+```bash
+python3 gsv_survey_planner.py --length-km 40 --spacing-m 10
+python3 gsv_survey_planner.py --length-km 2100 --spacing-m 10 --headings 4 --json
+python3 gsv_survey_planner.py --self-test   # checks the documented price examples
+```

@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+
+# local data / outputs
+*.las
+*.tif
+MASKED_*.jpg
